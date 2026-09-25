@@ -1,3 +1,8 @@
+### Custom ###
+# AI symlinks point into adjacent .ai/ folders; targets are committed, symlinks are not.
+/AGENTS.md
+/CLAUDE.md
+
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,visualstudiocode
 
