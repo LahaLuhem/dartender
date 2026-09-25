@@ -26,6 +26,17 @@ Describe 'detect.sh'
     The line 2 of output should equal 'lint-image=linterpol:1'
   End
 
+  It 'lists what it found on the run summary page'
+    r="$(repo '{"image":"linterpol:1","checks":[{"name":"ShellCheck","cmd":"a"},{"name":"rumdl","cmd":"b"}]}')"
+    summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+    export GITHUB_STEP_SUMMARY="${summary}"
+    expected="$(printf '%s\n' '### What dartender found' '| What | Found |' '|---|---|' \
+      '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |")"
+    When run script scripts/detect.sh "${r}"
+    The output should be present
+    The contents of file "${summary}" should equal "${expected}"
+  End
+
   Describe 'a broken manifest'
     It 'fails when there is none'
       r="$(repo)"

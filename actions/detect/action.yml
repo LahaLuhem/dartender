@@ -22,17 +22,3 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/detect.sh" >> "$GITHUB_OUTPUT"'
-
-    - name: Summary
-      shell: bash
-      env:
-        CHECKS: ${{ steps.detect.outputs.lint-checks }}
-        IMAGE: ${{ steps.detect.outputs.lint-image }}
-      run: |
-        {
-          echo "### What dartender found"
-          echo "| What | Found |"
-          echo "|---|---|"
-          echo "| Linters | $(jq -r '[.[].name] | join(", ")' <<< "$CHECKS") |"
-          echo "| Lint image | \`$IMAGE\` |"
-        } >> "$GITHUB_STEP_SUMMARY"
