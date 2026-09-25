@@ -20,13 +20,14 @@ the script has under `scripts/`.
   trusting it.
 
 ## Comments
+
 - **Why, not what.** The line underneath already says what it does.
 - **At the call site, one or two lines.** Anything longer is rationale and belongs in prose.
 - **Delete by default.** Keep a comment only if a reader would get something wrong without it.
 
 ## Prose
 
-READMEs, docs, commit and PR text. The voice reference is <https://noslopgrenade.com/>.
+Comments, READMEs, docs, commit and PR text. The voice reference is <https://noslopgrenade.com/>.
 
 - **Answer first, then stop.** Keep it informal and plain, no buzzwords.
 - **Tables, lists and `<details>` where they fit.** They should cut the word count, not add to it.

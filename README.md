@@ -1,6 +1,6 @@
 Shared CI for my Dart and Flutter packages on pub.dev. Every package repo calls the workflows here,
-so a fix lands once instead of six times. A bartender for Dart: one bar, and every pub gets the
-same pour.
+so a fix lands once instead of six times. \
+A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
 > Under construction. For now it lints. Package checks, PR conventions, publishing and the setup
