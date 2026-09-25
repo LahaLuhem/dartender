@@ -66,13 +66,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        env:
+      - env:
           RESULTS: >-
             plan=${{ needs.plan.result }}
             lint=${{ needs.lint.result }}
             action-inputs=${{ needs.action-inputs.result }}
-        run: |
-          echo "$RESULTS"
-          exit 1
+        run: echo "$RESULTS"
+      # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
