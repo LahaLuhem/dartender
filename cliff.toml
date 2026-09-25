@@ -1,0 +1,40 @@
+# Dartender's own changelog, from its conventional commits: `git cliff` prints it.
+# Package repos don't use this. They write one entry per PR at release time instead.
+
+[changelog]
+header = "# Changelog\n\n"
+# The `<!-- n -->` prefixes only keep Keep a Changelog's section order, and striptags hides them.
+body = """
+{% if version -%}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+    ## [Unreleased]
+{% endif -%}
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim }}
+    {% for commit in commits %}
+        - {% if commit.breaking %}[**breaking**] {% endif %}\
+          {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+          {{ commit.message | split(pat="\n") | first | upper_first | trim }}\
+    {% endfor %}
+{% endfor %}\n
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+# Breaking changes still show up, even under a type that's otherwise left out.
+protect_breaking_commits = true
+sort_commits = "oldest"
+commit_parsers = [
+    { message = '^[a-z]+(\(.+\))?!:', group = "<!-- 2 -->Changed" },
+    { message = "^feat", group = "<!-- 1 -->Added" },
+    { message = "^(refactor|perf)", group = "<!-- 2 -->Changed" },
+    { message = "^deprecate", group = "<!-- 3 -->Deprecated" },
+    { message = "^remove", group = "<!-- 4 -->Removed" },
+    { message = "^fix", group = "<!-- 5 -->Fixed" },
+    { message = "^security", group = "<!-- 6 -->Security" },
+    # init is only the very first commit.
+    { message = "^(docs|style|test|build|ci|chore|init)", skip = true },
+]
