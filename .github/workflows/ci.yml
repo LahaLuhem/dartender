@@ -48,9 +48,20 @@ jobs:
           image: ${{ needs.plan.outputs.lint-image }}
           working-directory: ${{ inputs.working-directory }}
 
+  action-inputs:
+    name: Action inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/check-inputs
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
-    needs: [plan, lint]
+    needs: [plan, lint, action-inputs]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -61,6 +72,7 @@ jobs:
           RESULTS: >-
             plan=${{ needs.plan.result }}
             lint=${{ needs.lint.result }}
+            action-inputs=${{ needs.action-inputs.result }}
         run: |
           echo "$RESULTS"
           exit 1

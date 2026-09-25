@@ -18,6 +18,8 @@ the script has under `scripts/`.
   that ShellSpec sets its `SHELLSPEC_*` variables, so a spec using them disables SC2154 on line 2.
 - **A spec that can't fail isn't a spec.** Break the code it covers and watch it go red before
   trusting it.
+- **Each `Parameters` block gets a `Describe` of its own.** Blocks in one group pile their rows up,
+  and nested groups inherit them.
 
 ## Comments
 

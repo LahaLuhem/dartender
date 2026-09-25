@@ -3,8 +3,8 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints. Package checks, PR conventions, publishing and the setup
-> scripts are on their way.
+> Under construction. For now it lints and checks action inputs. Package checks, PR conventions,
+> publishing and the setup scripts are on their way.
 
 ## What's inside
 
@@ -14,6 +14,7 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
+| `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `scripts/` | The shell the actions run |
 | `test/` | A spec for each script, plus the image they run in |
 
