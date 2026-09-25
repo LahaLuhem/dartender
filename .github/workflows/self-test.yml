@@ -27,6 +27,8 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       working-directory: test/workflow_tests/${{ matrix.fixture }}
+      # The fixtures aren't on Coveralls.
+      coveralls: false
 
   specs:
     name: Specs
