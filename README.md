@@ -17,7 +17,8 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` |
 | `scripts/` | The shell the actions run |
-| `test/` | A spec for each script, plus the image they run in |
+| `test/unit_tests/` | A spec for each script |
+| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
 
 ## Lints
 

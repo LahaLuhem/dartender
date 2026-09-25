@@ -13,6 +13,8 @@ of it, so this is mostly the part they can't see.
 
 [ShellSpec](https://shellspec.info), one `*_spec.sh` per script. `test/` splits by kind of test
 first, so specs live in `test/unit_tests/`, in the same spot as the script has under `scripts/`.
+The packages the self-test runs `ci.yml` against live in `test/workflow_tests/`, each laid out like
+a real package repo.
 
 - **Specs start with `# shellcheck shell=bash`,** since they have no shebang. ShellCheck can't see
   that ShellSpec sets its `SHELLSPEC_*` variables, so a spec using them disables SC2154 on line 2.
