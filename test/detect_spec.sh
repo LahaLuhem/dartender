@@ -26,7 +26,7 @@ Describe 'detect.sh'
     The line 2 of output should equal 'lint-image=linterpol:1'
   End
 
-  Describe 'a manifest that would lint nothing'
+  Describe 'a broken manifest'
     It 'fails when there is none'
       r="$(repo)"
       When run script scripts/detect.sh "${r}"
@@ -41,6 +41,10 @@ Describe 'detect.sh'
       'one without an image' '{"checks":[{"name":"a","cmd":"a"}]}'
       'one without checks' '{"image":"img"}'
       'an empty check list' '{"image":"img","checks":[]}'
+      'a check without a name' '{"image":"img","checks":[{"cmd":"a"}]}'
+      'a check without a command' '{"image":"img","checks":[{"name":"a"}]}'
+      'a blank command' '{"image":"img","checks":[{"name":"a","cmd":" "}]}'
+      'a later check without a command' '{"image":"img","checks":[{"name":"a","cmd":"a"},{"name":"b"}]}'
     End
 
     It "fails on $1"

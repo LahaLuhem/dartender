@@ -4,10 +4,12 @@ set -euo pipefail
 cd "${1:-.}"
 
 manifest=.github/lint-checks.json
-# An empty matrix would run zero linters and still pass, so a broken manifest has to fail here.
-if ! jq -e '.image and (.checks | length > 0)' "${manifest}" >/dev/null 2>&1; then
+# No checks, or a check with no command, would lint nothing and still pass, so both fail here.
+valid='.image and (.checks | length > 0) and all(.checks[];
+  (.name | type == "string" and length > 0) and (.cmd | type == "string" and test("\\S")))'
+if ! jq -e "${valid}" "${manifest}" >/dev/null 2>&1; then
   echo "::error::${manifest} is missing, malformed or empty." \
-    "It needs an \"image\" and at least one check." >&2
+    "It needs an \"image\" and at least one check, each with a \"name\" and a \"cmd\"." >&2
   exit 1
 fi
 checks="$(jq -c .checks "${manifest}")"
