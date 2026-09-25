@@ -26,8 +26,8 @@ Repos without their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actio
 ## Specs
 
 `test/run.sh` runs the [ShellSpec](https://shellspec.info) specs in Docker the same way CI does.
-It hands any arguments to `shellspec`, so `test/run.sh test/detect_spec.sh` runs just that one.
-Where specs go and how to write them is in [CODESTYLE.md](CODESTYLE.md#specs).
+It hands any arguments to `shellspec`, so `test/run.sh test/unit_tests/detect_spec.sh` runs just
+that one. Where specs go and how to write them is in [CODESTYLE.md](CODESTYLE.md#specs).
 
 ## Changing things here
 
