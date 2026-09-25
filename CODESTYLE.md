@@ -1,5 +1,5 @@
-Style for the shell in `scripts/` and `test/`, and for the prose. The checks enforce most of it, so
-this is mostly the part they can't see.
+Style for the shell in `scripts/` and `test/`, the CI YAML, and the prose. The checks enforce most
+of it, so this is mostly the part they can't see.
 
 ## Shell
 
@@ -20,6 +20,10 @@ the script has under `scripts/`.
   trusting it.
 - **Each `Parameters` block gets a `Describe` of its own.** Blocks in one group pile their rows up,
   and nested groups inherit them.
+
+## CI YAML
+
+- **One command per step, no `run: |` blocks,** so a run reads step by step in the log.
 
 ## Comments
 

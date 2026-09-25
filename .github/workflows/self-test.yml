@@ -34,11 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        env:
+      - env:
           RESULTS: >-
             ci=${{ needs.ci.result }}
             specs=${{ needs.specs.result }}
-        run: |
-          echo "$RESULTS"
-          exit 1
+        run: echo "$RESULTS"
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
