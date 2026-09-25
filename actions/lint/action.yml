@@ -21,10 +21,5 @@ runs:
         LINT_CMD: ${{ inputs.cmd }}
         LINTERPOL_IMAGE: ${{ inputs.image }}
         DEFAULTS: ${{ github.action_path }}/defaults
-      run: |
-        # A repo lints with the shared configs unless it brings its own.
-        [ -e .rumdl.toml ] || cp "$DEFAULTS/rumdl.toml" .rumdl.toml
-        [ -e .yamllint.yaml ] || cp "$DEFAULTS/yamllint.yaml" .yamllint.yaml
-        # Unquoted on purpose, so it splits into tool and args and globs like scripts/*.sh expand.
-        # shellcheck disable=SC2086
-        docker run --rm -v "$PWD:/work:ro" "$LINTERPOL_IMAGE" $LINT_CMD
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/lint.sh"'
