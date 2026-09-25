@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    # "/" alone only covers .github/workflows, and the composite actions live under actions/.
+    directories: ["/", "/actions/*"]
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch]

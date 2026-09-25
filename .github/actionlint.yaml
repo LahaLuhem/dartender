@@ -1,0 +1,5 @@
+paths:
+  .github/workflows/**/*.yml:
+    ignore:
+      # actionlint predates `$/` (GitHub shipped it in July 2026), and ci.yml needs it.
+      - 'specifying action "\$/[^"]+" in invalid format'

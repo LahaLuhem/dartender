@@ -1,0 +1,33 @@
+name: Self-test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: self-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Dartender checks itself with the same workflow every package repo calls.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
+  self-test-ok:
+    needs: [ci]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        env:
+          RESULTS: ci=${{ needs.ci.result }}
+        run: |
+          echo "$RESULTS"
+          exit 1

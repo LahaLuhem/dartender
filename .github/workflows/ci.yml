@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Folder of the package to check. Only dartender's self-tests change it.
+        type: string
+        default: .
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    outputs:
+      lint-checks: ${{ steps.detect.outputs.lint-checks }}
+      lint-image: ${{ steps.detect.outputs.lint-image }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # `$/` pins dartender's own actions to the commit that's running, so a PR here tests its own
+      # version of them. `./` would look in the calling repo instead.
+      - id: detect
+        uses: $/actions/detect
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+  lint:
+    name: ${{ matrix.check.name }}
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      # Each linter reports on its own, so one failure doesn't cancel the rest.
+      fail-fast: false
+      matrix:
+        check: ${{ fromJSON(needs.plan.outputs.lint-checks) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/lint
+        with:
+          cmd: ${{ matrix.check.cmd }}
+          image: ${{ needs.plan.outputs.lint-image }}
+          working-directory: ${{ inputs.working-directory }}
+
+  # The required check in every repo's ruleset, so don't rename it.
+  ok:
+    needs: [plan, lint]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        env:
+          RESULTS: >-
+            plan=${{ needs.plan.result }}
+            lint=${{ needs.lint.result }}
+        run: |
+          echo "$RESULTS"
+          exit 1

@@ -1,0 +1,30 @@
+name: Lint
+description: Runs one linter from the linterpol image over a package repo.
+
+inputs:
+  cmd:
+    description: The linter and its arguments, from lint-checks.json.
+    required: true
+  image:
+    description: The linterpol image.
+    required: true
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        LINT_CMD: ${{ inputs.cmd }}
+        LINTERPOL_IMAGE: ${{ inputs.image }}
+        DEFAULTS: ${{ github.action_path }}/defaults
+      run: |
+        # A repo lints with the shared configs unless it brings its own.
+        [ -e .rumdl.toml ] || cp "$DEFAULTS/rumdl.toml" .rumdl.toml
+        [ -e .yamllint.yaml ] || cp "$DEFAULTS/yamllint.yaml" .yamllint.yaml
+        # Unquoted on purpose, so it splits into tool and args and globs like scripts/*.sh expand.
+        # shellcheck disable=SC2086
+        docker run --rm -v "$PWD:/work:ro" "$LINTERPOL_IMAGE" $LINT_CMD

@@ -1,0 +1,23 @@
+# Shared Markdown rules for the package repos. A repo can bring its own .rumdl.toml instead.
+
+[global]
+# Written by tools or generated, not kept by hand.
+exclude = [
+    "CHANGELOG.md",
+    ".github/ISSUE_TEMPLATE/**",
+    "example/ios/**",
+    "example/android/**",
+    "benchmark/reports/**",
+]
+# MD033: the <details> blocks and <a id> anchors are on purpose.
+# MD022: those anchors sit right above headings.
+# MD041: READMEs open with badges, not a heading.
+# MD057: links through the .ai/ symlinks look broken to the checker.
+# MD004, MD007: the README table of contents is generated, markers and indents included.
+disable = ["MD033", "MD022", "MD041", "MD057", "MD004", "MD007"]
+
+[MD013]
+# Same width as .editorconfig. Code blocks and tables can't reflow.
+line-length = 100
+code_blocks = false
+tables = false

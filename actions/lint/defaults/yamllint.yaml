@@ -1,0 +1,19 @@
+# Shared YAML rules for the package repos. A repo can bring its own .yamllint.yaml instead.
+extends: default
+
+rules:
+  # Same width as .editorconfig.
+  line-length:
+    max: 100
+  # Room for the wide section dividers in pubspec.yaml and analysis_options.yaml.
+  empty-lines:
+    max: 5
+  # Inline comments get one space, and commented-out config has none after the `#`.
+  comments:
+    min-spaces-from-content: 1
+    require-starting-space: false
+  # `on:` in workflows reads as a truthy key.
+  truthy:
+    check-keys: false
+  # Single documents, no leading `---`.
+  document-start: disable
