@@ -18,6 +18,16 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
+  # And against packages laid out like the real repos, since dartender itself has no pubspec.
+  fixtures:
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dart_package, flutter_package]
+    uses: ./.github/workflows/ci.yml
+    with:
+      working-directory: test/workflow_tests/${{ matrix.fixture }}
+
   specs:
     name: Specs
     runs-on: ubuntu-latest
@@ -29,7 +39,7 @@ jobs:
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, specs]
+    needs: [ci, fixtures, specs]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -37,6 +47,7 @@ jobs:
       - env:
           RESULTS: >-
             ci=${{ needs.ci.result }}
+            fixtures=${{ needs.fixtures.result }}
             specs=${{ needs.specs.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

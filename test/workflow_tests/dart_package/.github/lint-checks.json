@@ -1,0 +1,6 @@
+{
+  "image": "ghcr.io/lahaluhem/linterpol:latest",
+  "checks": [
+    { "name": "rumdl", "cmd": "rumdl check ." }
+  ]
+}

@@ -1,0 +1,3 @@
+# The example has its own pubspec, so its imports aren't this package's to declare.
+exclude:
+  - "example/**"

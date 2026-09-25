@@ -18,6 +18,7 @@ jobs:
     outputs:
       lint-checks: ${{ steps.detect.outputs.lint-checks }}
       lint-image: ${{ steps.detect.outputs.lint-image }}
+      package: ${{ steps.detect.outputs.package }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -59,9 +60,55 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
 
+  format:
+    name: Format
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - working-directory: ${{ inputs.working-directory }}
+        run: dart format --output=none --set-exit-if-changed .
+
+  analyze:
+    name: Analyze
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Its `flutter pub get` resolves the example as well, so the analyzer covers both.
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - working-directory: ${{ inputs.working-directory }}
+        run: dart analyze --fatal-infos .
+
+  dependencies:
+    name: Dependency validator
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - working-directory: ${{ inputs.working-directory }}
+        run: dart run dependency_validator
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
-    needs: [plan, lint, action-inputs]
+    needs: [plan, lint, action-inputs, format, analyze, dependencies]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -71,6 +118,9 @@ jobs:
             plan=${{ needs.plan.result }}
             lint=${{ needs.lint.result }}
             action-inputs=${{ needs.action-inputs.result }}
+            format=${{ needs.format.result }}
+            analyze=${{ needs.analyze.result }}
+            dependencies=${{ needs.dependencies.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

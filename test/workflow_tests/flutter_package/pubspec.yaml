@@ -1,0 +1,17 @@
+name: flutter_package
+description: A Flutter package with an example app that dartender's self-test runs ci.yml against.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  dependency_validator: ^5.1.0
+  flutter_test:
+    sdk: flutter
