@@ -16,3 +16,15 @@ checks="$(jq -c .checks "${manifest}")"
 image="$(jq -r .image "${manifest}")"
 echo "lint-checks=${checks}"
 echo "lint-image=${image}"
+
+# Only Actions has a summary page, so a run anywhere else skips it.
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  names="$(jq -r '[.[].name] | join(", ")' <<< "${checks}")"
+  cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
+### What dartender found
+| What | Found |
+|---|---|
+| Linters | ${names} |
+| Lint image | \`${image}\` |
+EOF
+fi
