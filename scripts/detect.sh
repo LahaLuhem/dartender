@@ -5,10 +5,12 @@ cd "${1:-.}"
 
 manifest=.github/lint-checks.json
 # An empty matrix would run zero linters and still pass, so a broken manifest has to fail here.
-if ! jq -e '.image and (.checks | length > 0)' "$manifest" >/dev/null 2>&1; then
-  echo "::error::$manifest is missing, malformed or empty." \
+if ! jq -e '.image and (.checks | length > 0)' "${manifest}" >/dev/null 2>&1; then
+  echo "::error::${manifest} is missing, malformed or empty." \
     "It needs an \"image\" and at least one check." >&2
   exit 1
 fi
-echo "lint-checks=$(jq -c .checks "$manifest")"
-echo "lint-image=$(jq -r .image "$manifest")"
+checks="$(jq -c .checks "${manifest}")"
+image="$(jq -r .image "${manifest}")"
+echo "lint-checks=${checks}"
+echo "lint-image=${image}"

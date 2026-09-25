@@ -18,16 +18,27 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
+  specs:
+    name: Specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: test/run.sh
+
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci]
+    needs: [ci, specs]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         env:
-          RESULTS: ci=${{ needs.ci.result }}
+          RESULTS: >-
+            ci=${{ needs.ci.result }}
+            specs=${{ needs.specs.result }}
         run: |
           echo "$RESULTS"
           exit 1
