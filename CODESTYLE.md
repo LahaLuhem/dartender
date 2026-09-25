@@ -24,6 +24,8 @@ first, so specs live in `test/unit_tests/`, in the same spot as the script has u
 ## CI YAML
 
 - **One command per step, no `run: |` blocks,** so a run reads step by step in the log.
+- **Write out every input we rely on, defaults included,** so a new major that changes a default
+  can't quietly change what runs. The input check catches one that got renamed.
 
 ## Comments
 

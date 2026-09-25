@@ -15,6 +15,7 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
+| `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` |
 | `scripts/` | The shell the actions run |
 | `test/` | A spec for each script, plus the image they run in |
 

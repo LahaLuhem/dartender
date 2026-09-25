@@ -1,0 +1,21 @@
+name: Setup Flutter
+description: Installs Flutter stable with its pub cache, then gets the package's dependencies.
+
+inputs:
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    # Pure Dart packages get Flutter too, so format and analyze see the same Dart in every repo.
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        cache: true
+        pub-cache: true
+
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: flutter pub get
