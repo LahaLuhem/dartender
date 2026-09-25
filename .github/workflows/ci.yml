@@ -7,6 +7,18 @@ on:
         description: Folder of the package to check. Only dartender's self-tests change it.
         type: string
         default: .
+      min-coverage:
+        description: The lowest line coverage that passes, in percent.
+        type: number
+        default: 95
+      coverage-excludes:
+        description: Space-separated globs to leave out of coverage, besides generated `*.g.dart`.
+        type: string
+        default: ""
+      coveralls:
+        description: Uploads coverage to Coveralls. Turn it off for a repo that isn't set up there.
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -19,6 +31,7 @@ jobs:
       lint-checks: ${{ steps.detect.outputs.lint-checks }}
       lint-image: ${{ steps.detect.outputs.lint-image }}
       package: ${{ steps.detect.outputs.package }}
+      flutter: ${{ steps.detect.outputs.flutter }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -106,9 +119,49 @@ jobs:
       - working-directory: ${{ inputs.working-directory }}
         run: dart run dependency_validator
 
+  test:
+    name: Tests
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    env:
+      MIN_COVERAGE: ${{ inputs.min-coverage }}
+      # Generated code has nothing to test, so it never counts.
+      EXCLUDES: "**/*.g.dart ${{ inputs.coverage-excludes }}"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - run: dart pub global activate very_good_cli
+      # --no-optimization runs the test files as written, instead of merged into one.
+      - if: needs.plan.outputs.flutter == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: >-
+          very_good test --coverage --min-coverage "$MIN_COVERAGE"
+          --exclude-coverage "$EXCLUDES" --collect-coverage-from imports
+          --no-optimization
+      - if: needs.plan.outputs.flutter != 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: >-
+          very_good dart test --coverage --min-coverage "$MIN_COVERAGE"
+          --exclude-coverage "$EXCLUDES" --collect-coverage-from imports
+          --check-ignore --no-optimization
+      # Also after a failed gate, so Coveralls shows the drop. An outage only turns this step red.
+      - if: ${{ !cancelled() && inputs.coveralls }}
+        continue-on-error: true
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ github.token }}
+          file: ${{ inputs.working-directory }}/coverage/lcov.info
+          format: lcov
+          fail-on-error: true
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
-    needs: [plan, lint, action-inputs, format, analyze, dependencies]
+    needs: [plan, lint, action-inputs, format, analyze, dependencies, test]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -121,6 +174,7 @@ jobs:
             format=${{ needs.format.result }}
             analyze=${{ needs.analyze.result }}
             dependencies=${{ needs.dependencies.result }}
+            test=${{ needs.test.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
