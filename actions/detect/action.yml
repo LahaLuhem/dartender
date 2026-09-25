@@ -13,6 +13,18 @@ outputs:
   lint-image:
     description: The linterpol image to lint with.
     value: ${{ steps.detect.outputs.lint-image }}
+  package:
+    description: Whether there's a pubspec.yaml, true or false.
+    value: ${{ steps.detect.outputs.package }}
+  flutter:
+    description: Whether the package depends on the Flutter SDK.
+    value: ${{ steps.detect.outputs.flutter }}
+  example:
+    description: Whether there's an example app with its own pubspec.yaml.
+    value: ${{ steps.detect.outputs.example }}
+  example-tests:
+    description: Whether that example has a test folder.
+    value: ${{ steps.detect.outputs.example-tests }}
 
 runs:
   using: composite

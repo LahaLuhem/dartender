@@ -31,10 +31,65 @@ Describe 'detect.sh'
     summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
     export GITHUB_STEP_SUMMARY="${summary}"
     expected="$(printf '%s\n' '### What dartender found' '| What | Found |' '|---|---|' \
+      '| Package | none |' '| Example | none |' \
       '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |")"
     When run script scripts/detect.sh "${r}"
     The output should be present
     The contents of file "${summary}" should equal "${expected}"
+  End
+
+  Describe 'the package'
+    Parameters
+      'no package' '' 'package=false' 'flutter=false' 'none'
+      'a pure Dart package' 'name: a' 'package=true' 'flutter=false' 'pure Dart'
+      'a Flutter package' $'name: a\ndependencies:\n  flutter:\n    sdk: flutter' \
+        'package=true' 'flutter=true' 'Flutter'
+    End
+
+    It "finds $1"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      if [[ -n "$2" ]]; then printf '%s\n' "$2" > "${r}/pubspec.yaml"; fi
+      summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+      export GITHUB_STEP_SUMMARY="${summary}"
+      When run script scripts/detect.sh "${r}"
+      The line 3 of output should equal "$3"
+      The line 4 of output should equal "$4"
+      The contents of file "${summary}" should include "| Package | $5 |"
+    End
+  End
+
+  Describe 'the example'
+    Parameters
+      'no example' '' 'example=false' 'example-tests=false' 'none'
+      'an example without tests' 'example' 'example=true' 'example-tests=false' 'without tests'
+      'an example with tests' 'example/test' 'example=true' 'example-tests=true' 'with tests'
+    End
+
+    It "finds $1"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      printf 'name: a\n' > "${r}/pubspec.yaml"
+      if [[ -n "$2" ]]; then
+        mkdir -p "${r}/$2"
+        printf 'name: a_example\n' > "${r}/example/pubspec.yaml"
+      fi
+      summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+      export GITHUB_STEP_SUMMARY="${summary}"
+      When run script scripts/detect.sh "${r}"
+      The line 5 of output should equal "$3"
+      The line 6 of output should equal "$4"
+      The contents of file "${summary}" should include "| Example | $5 |"
+    End
+  End
+
+  # Pure Dart packages often ship example/example.dart, which gets checked with the package itself.
+  It 'ignores an example folder with no pubspec of its own'
+    r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+    printf 'name: a\n' > "${r}/pubspec.yaml"
+    mkdir -p "${r}/example/test"
+    printf 'void main() {}\n' > "${r}/example/example.dart"
+    When run script scripts/detect.sh "${r}"
+    The line 5 of output should equal 'example=false'
+    The line 6 of output should equal 'example-tests=false'
   End
 
   Describe 'a broken manifest'
