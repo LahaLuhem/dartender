@@ -12,13 +12,17 @@ concurrency:
 
 permissions:
   contents: read
-  # ci.yml's path filter asks the API for a PR's changed files.
+  # What the conventions gate asks for.
   pull-requests: read
 
 jobs:
   # Dartender checks itself with the same workflow every package repo calls.
   ci:
     uses: ./.github/workflows/ci.yml
+    # What ci.yml's Auto-merge job asks for. A run whose caller grants less won't start.
+    permissions:
+      contents: write
+      pull-requests: write
 
   # And against packages laid out like the real repos, since dartender itself has no pubspec.
   fixtures:
@@ -27,6 +31,10 @@ jobs:
       matrix:
         fixture: [dart_package, flutter_package]
     uses: ./.github/workflows/ci.yml
+    # Here too, though the job skips, since GitHub checks grants before any `if:`.
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       working-directory: test/workflow_tests/${{ matrix.fixture }}
       # The fixtures aren't on Coveralls.
