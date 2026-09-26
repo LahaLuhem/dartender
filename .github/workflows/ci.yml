@@ -27,6 +27,10 @@ jobs:
   plan:
     name: Plan
     runs-on: ubuntu-latest
+    # paths-filter asks the API for a PR's changed files.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       lint-checks: ${{ steps.detect.outputs.lint-checks }}
       lint-image: ${{ steps.detect.outputs.lint-image }}
@@ -34,6 +38,7 @@ jobs:
       flutter: ${{ steps.detect.outputs.flutter }}
       example: ${{ steps.detect.outputs.example }}
       example-tests: ${{ steps.detect.outputs.example-tests }}
+      android-changed: ${{ steps.changes.outputs.android }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,6 +49,20 @@ jobs:
         uses: $/actions/detect
         with:
           working-directory: ${{ inputs.working-directory }}
+      - id: changes
+        uses: dorny/paths-filter@v4
+        with:
+          token: ${{ github.token }}
+          base: ${{ github.event.repository.default_branch }}
+          predicate-quantifier: some
+          # Android code, plus the files that build it (`actions/` only exists in dartender). Not
+          # the pubspecs: a bump there can bring native code for Android, iOS, both or neither.
+          filters: |
+            android:
+              - '${{ inputs.working-directory }}/android/**'
+              - '${{ inputs.working-directory }}/example/android/**'
+              - '.github/workflows/ci.yml'
+              - 'actions/setup-flutter/**'
 
   lint:
     name: ${{ matrix.check.name }}
@@ -193,6 +212,29 @@ jobs:
       - working-directory: ${{ inputs.working-directory }}/example
         run: flutter test
 
+  example-android:
+    name: Android build (example)
+    needs: plan
+    if: needs.plan.outputs.example == 'true' && needs.plan.outputs.android-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          java-package: jdk
+          set-default: true
+          cache: gradle
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      # Release, so R8's shrinking runs too, which a debug build skips.
+      - working-directory: ${{ inputs.working-directory }}/example
+        run: flutter build apk --release
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
     needs:
@@ -205,6 +247,7 @@ jobs:
       - test
       - example-dependencies
       - example-test
+      - example-android
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -220,6 +263,7 @@ jobs:
             test=${{ needs.test.result }}
             example-dependencies=${{ needs.example-dependencies.result }}
             example-test=${{ needs.example-test.result }}
+            example-android=${{ needs.example-android.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

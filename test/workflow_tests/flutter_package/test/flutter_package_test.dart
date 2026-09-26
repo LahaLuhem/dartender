@@ -1,10 +1,10 @@
-import 'package:flutter_package/flutter_package.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() {
-  testWidgets('greets by name', (tester) async {
-    await tester.pumpWidget(const Greeting(name: 'dartender'));
+import 'package:flutter_package/flutter_package.dart';
 
-    expect(find.text('Hello, dartender'), findsOneWidget);
+void main() {
+  test('counts up by one', () {
+    final counter = Counter()..increment();
+    expect(counter.value, 1);
   });
 }

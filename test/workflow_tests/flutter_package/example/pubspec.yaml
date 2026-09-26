@@ -1,17 +1,21 @@
-name: flutter_package_example
-description: Shows the flutter_package fixture in an app.
+name: flutter_app_example
 publish_to: none
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.13.0
+  sdk: ^3.13.4
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_package:
-    path: ../
+    path: ..
 
 dev_dependencies:
   dependency_validator: ^5.1.0
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+
+flutter:
+  uses-material-design: true

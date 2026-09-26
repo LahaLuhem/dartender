@@ -12,6 +12,8 @@ concurrency:
 
 permissions:
   contents: read
+  # ci.yml's path filter asks the API for a PR's changed files.
+  pull-requests: read
 
 jobs:
   # Dartender checks itself with the same workflow every package repo calls.

@@ -22,6 +22,8 @@ a real package repo.
   trusting it.
 - **Each `Parameters` block gets a `Describe` of its own.** Blocks in one group pile their rows up,
   and nested groups inherit them.
+- **Fixtures come from the tool that makes real packages** (`flutter create`, `dart create`), and
+  change only where a job needs it, so CI gets tested on what a package repo actually has.
 
 ## CI YAML
 
