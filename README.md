@@ -3,14 +3,14 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints, checks action inputs, and runs the package, example and PR
-> checks. Dependabot auto-merge, publishing and the setup scripts are on their way.
+> Under construction. For now it lints, checks action inputs, runs the package, example and PR
+> checks, and auto-merges Dependabot's PRs. Publishing and the setup scripts are on their way.
 
 ## What's inside
 
 | Path | What |
 |---|---|
-| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main |
+| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
@@ -23,6 +23,21 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `scripts/` | The shell the actions run |
 | `test/unit_tests/` | A spec for each script |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
+
+## Calling it
+
+A package repo calls each workflow from a caller file of its own, with one job pinned to `@main`:
+`uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks, `ci / ok` and
+`conventions / ok`, take their names from these jobs, so keep them.
+
+| Job | Calls | Grants | For |
+|---|---|---|---|
+| `ci` | `ci.yml` | `contents: write`, `pull-requests: write` | Auto-merging Dependabot's PRs |
+| `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
+
+If a caller grants less than a job asks for, the run won't start, even when that job would skip.
+With nothing required, `gh` merges Dependabot's PRs on the spot instead of waiting, so a repo gets
+its ruleset before its `ci` caller.
 
 ## Lints
 
