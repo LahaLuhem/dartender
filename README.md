@@ -3,14 +3,14 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints, checks action inputs, and runs the package, example and PR
-> checks. Dependabot auto-merge, publishing and the setup scripts are on their way.
+> Under construction. For now it lints, checks action inputs, runs the package, example and PR
+> checks, and auto-merges Dependabot's PRs. Publishing and the setup scripts are on their way.
 
 ## What's inside
 
 | Path | What |
 |---|---|
-| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main |
+| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |

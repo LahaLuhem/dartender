@@ -235,6 +235,24 @@ jobs:
       - working-directory: ${{ inputs.working-directory }}/example
         run: flutter build apk --release
 
+  # Every Dependabot bump, majors included. The required checks decide, and a merge isn't a release.
+  auto-merge:
+    name: Auto-merge
+    # Only the self-test's fixture runs change working-directory, and they shouldn't touch the PR.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]'
+      && inputs.working-directory == '.'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # With nothing required, gh merges on the spot instead, so a repo gets its ruleset first.
+      - env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge --auto --rebase "$PR_URL"
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
     needs:
@@ -248,6 +266,7 @@ jobs:
       - example-dependencies
       - example-test
       - example-android
+      - auto-merge
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -264,6 +283,7 @@ jobs:
             example-dependencies=${{ needs.example-dependencies.result }}
             example-test=${{ needs.example-test.result }}
             example-android=${{ needs.example-android.result }}
+            auto-merge=${{ needs.auto-merge.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
