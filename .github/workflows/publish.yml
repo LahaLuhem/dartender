@@ -1,0 +1,44 @@
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Folder of the package to publish. Only dartender's self-tests change it.
+        type: string
+        default: .
+      dry-run:
+        description: Runs everything but the upload. Only dartender's self-tests set it.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    # pub.dev takes a GitHub OIDC token instead of a login.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Only here for that token, since Flutter's `dart` shadows this one. Not in an action of ours,
+      # because its problem matcher breaks inside a wrapper.
+      - uses: dart-lang/setup-dart@v1
+      # A root pub get also resolves the example and can rewrite its committed lockfile, which fails
+      # the dry-run. `pub publish` resolves the package on its own.
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          pub-get: false
+      # Fails on warnings too, which `--force` would publish anyway.
+      - working-directory: ${{ inputs.working-directory }}
+        run: dart pub publish --dry-run
+      - if: ${{ !inputs.dry-run }}
+        working-directory: ${{ inputs.working-directory }}
+        run: dart pub publish --force
