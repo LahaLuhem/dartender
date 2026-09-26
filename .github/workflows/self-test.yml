@@ -32,6 +32,11 @@ jobs:
       # The fixtures aren't on Coveralls.
       coveralls: false
 
+  # Pushes to main have no pull request to check.
+  conventions:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/conventions.yml
+
   specs:
     name: Specs
     runs-on: ubuntu-latest
@@ -43,7 +48,7 @@ jobs:
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, specs]
+    needs: [ci, fixtures, conventions, specs]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -52,6 +57,7 @@ jobs:
           RESULTS: >-
             ci=${{ needs.ci.result }}
             fixtures=${{ needs.fixtures.result }}
+            conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

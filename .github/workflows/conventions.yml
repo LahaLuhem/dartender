@@ -1,0 +1,39 @@
+name: Conventions
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    name: Commit conventions
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history, so the pull request's commits are there to read.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # `$/` is dartender at the running commit, where `./` would be the calling repo.
+      - uses: $/actions/commit-conventions
+        with:
+          body: ${{ github.event.pull_request.body }}
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+
+  # The required check in every repo's ruleset, so don't rename it.
+  ok:
+    needs: [commits]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - env:
+          RESULTS: >-
+            commits=${{ needs.commits.result }}
+        run: echo "$RESULTS"
+      # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
