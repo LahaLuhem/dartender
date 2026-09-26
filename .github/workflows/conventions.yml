@@ -41,13 +41,28 @@ jobs:
     needs: [branch, commits]
     if: always()
     runs-on: ubuntu-latest
-    permissions: {}
+    # A PR's gates wait in line, so the one that finishes last also read the labels last.
+    concurrency:
+      group: conventions-ok-${{ github.event.pull_request.number }}
+      queue: max
+    # The label check reads the PR's labels through the API.
+    permissions:
+      pull-requests: read
     steps:
       - env:
           RESULTS: >-
             branch=${{ needs.branch.result }}
             commits=${{ needs.commits.result }}
         run: echo "$RESULTS"
+      # Right before the verdict, since labels can change while the other jobs run. Dependabot and
+      # dartender don't use sem-* labels.
+      - if: >-
+          github.event.pull_request.user.login != 'dependabot[bot]'
+          && github.repository != 'LahaLuhem/dartender'
+        uses: $/actions/sem-label
+        with:
+          repo: ${{ github.repository }}
+          pr: ${{ github.event.pull_request.number }}
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1

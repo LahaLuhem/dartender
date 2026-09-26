@@ -1,0 +1,22 @@
+name: Sem-* label
+description: Fails unless the pull request has exactly one of the seven sem-* labels.
+
+inputs:
+  repo:
+    description: The repository, as owner/name.
+    required: true
+  pr:
+    description: The pull request's number.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        REPO: ${{ inputs.repo }}
+        PR: ${{ inputs.pr }}
+        # gh won't call the API without a token, even for public repos.
+        GH_TOKEN: ${{ github.token }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/sem-label.sh"'
