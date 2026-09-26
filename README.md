@@ -3,8 +3,8 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints and checks action inputs. Package checks, PR conventions,
-> publishing and the setup scripts are on their way.
+> Under construction. For now it lints, checks action inputs, and runs the package and example
+> checks. PR conventions, Dependabot auto-merge, publishing and the setup scripts are on their way.
 
 ## What's inside
 

@@ -5,8 +5,9 @@
 exclude = [
     "CHANGELOG.md",
     ".github/ISSUE_TEMPLATE/**",
-    "example/ios/**",
-    "example/android/**",
+    # At any depth, so dartender's fixtures count too.
+    "**/example/ios/**",
+    "**/example/android/**",
     "benchmark/reports/**",
 ]
 # MD033: the <details> blocks and <a id> anchors are on purpose.
