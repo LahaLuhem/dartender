@@ -1,0 +1,24 @@
+name: Commit conventions
+description: Fails on a blank description, a merge commit, or a subject over 82 characters.
+
+inputs:
+  body:
+    description: The pull request's description.
+    default: ""
+  base:
+    description: The commit the pull request starts from.
+    required: true
+  head:
+    description: The pull request's last commit.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        PR_BODY: ${{ inputs.body }}
+        BASE_SHA: ${{ inputs.base }}
+        HEAD_SHA: ${{ inputs.head }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/commit-conventions.sh"'

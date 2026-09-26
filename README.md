@@ -11,11 +11,13 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | Path | What |
 |---|---|
 | `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main |
+| `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` |
+| `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `scripts/` | The shell the actions run |
 | `test/unit_tests/` | A spec for each script |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
