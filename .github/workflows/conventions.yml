@@ -7,6 +7,20 @@ permissions:
   contents: read
 
 jobs:
+  branch:
+    name: Branch name
+    # Dependabot picks its own branch names, and dartender doesn't name branches after issues.
+    # The PR's author, not the actor, so someone labelling a bot PR doesn't turn this back on.
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]'
+      && github.repository != 'LahaLuhem/dartender'
+    runs-on: ubuntu-latest
+    steps:
+      # `$/` is dartender at the running commit, where `./` would be the calling repo.
+      - uses: $/actions/branch-name
+        with:
+          branch: ${{ github.head_ref }}
+
   commits:
     name: Commit conventions
     runs-on: ubuntu-latest
@@ -16,7 +30,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      # `$/` is dartender at the running commit, where `./` would be the calling repo.
       - uses: $/actions/commit-conventions
         with:
           body: ${{ github.event.pull_request.body }}
@@ -25,13 +38,14 @@ jobs:
 
   # The required check in every repo's ruleset, so don't rename it.
   ok:
-    needs: [commits]
+    needs: [branch, commits]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - env:
           RESULTS: >-
+            branch=${{ needs.branch.result }}
             commits=${{ needs.commits.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.

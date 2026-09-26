@@ -17,6 +17,7 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` |
+| `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `scripts/` | The shell the actions run |
 | `test/unit_tests/` | A spec for each script |

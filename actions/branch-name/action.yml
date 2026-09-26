@@ -1,0 +1,16 @@
+name: Branch name
+description: Fails on a branch that isn't named <type>/#<issue>-<name>.
+
+inputs:
+  branch:
+    description: The pull request's branch.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        BRANCH: ${{ inputs.branch }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/branch-name.sh"'
