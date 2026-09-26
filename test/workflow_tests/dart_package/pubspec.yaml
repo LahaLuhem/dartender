@@ -1,11 +1,16 @@
 name: dart_package
-description: A pure Dart package that dartender's self-test runs ci.yml against.
+description: A starting point for Dart libraries or applications.
 version: 1.0.0
-publish_to: none
+# repository: https://github.com/my_org/my_repo
 
 environment:
-  sdk: ^3.13.0
+  sdk: ^3.13.4
+
+# Add regular dependencies here.
+dependencies:
+  # path: ^1.9.0
 
 dev_dependencies:
   dependency_validator: ^5.1.0
-  test: ^1.32.0
+  lints: ^6.0.0
+  test: ^1.25.6
