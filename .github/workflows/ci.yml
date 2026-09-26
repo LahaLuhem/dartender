@@ -32,6 +32,8 @@ jobs:
       lint-image: ${{ steps.detect.outputs.lint-image }}
       package: ${{ steps.detect.outputs.package }}
       flutter: ${{ steps.detect.outputs.flutter }}
+      example: ${{ steps.detect.outputs.example }}
+      example-tests: ${{ steps.detect.outputs.example-tests }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -159,9 +161,50 @@ jobs:
           format: lcov
           fail-on-error: true
 
+  example-dependencies:
+    name: Dependency validator (example)
+    needs: plan
+    if: needs.plan.outputs.example == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # At the root, since its `flutter pub get` resolves the example too.
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - working-directory: ${{ inputs.working-directory }}/example
+        run: dart run dependency_validator
+
+  example-test:
+    name: Tests (example)
+    needs: plan
+    if: needs.plan.outputs.example-tests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      # The example doesn't ship, so its tests get no coverage gate.
+      - working-directory: ${{ inputs.working-directory }}/example
+        run: flutter test
+
   # The required check in every repo's ruleset, so don't rename it.
   ok:
-    needs: [plan, lint, action-inputs, format, analyze, dependencies, test]
+    needs:
+      - plan
+      - lint
+      - action-inputs
+      - format
+      - analyze
+      - dependencies
+      - test
+      - example-dependencies
+      - example-test
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -175,6 +218,8 @@ jobs:
             analyze=${{ needs.analyze.result }}
             dependencies=${{ needs.dependencies.result }}
             test=${{ needs.test.result }}
+            example-dependencies=${{ needs.example-dependencies.result }}
+            example-test=${{ needs.example-test.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
