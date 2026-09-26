@@ -24,6 +24,21 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `test/unit_tests/` | A spec for each script |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
 
+## Calling it
+
+A package repo calls each workflow from a caller file of its own, with one job pinned to `@main`:
+`uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks, `ci / ok` and
+`conventions / ok`, take their names from these jobs, so keep them.
+
+| Job | Calls | Grants | For |
+|---|---|---|---|
+| `ci` | `ci.yml` | `contents: write`, `pull-requests: write` | Auto-merging Dependabot's PRs |
+| `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
+
+If a caller grants less than a job asks for, the run won't start, even when that job would skip.
+With nothing required, `gh` merges Dependabot's PRs on the spot instead of waiting, so a repo gets
+its ruleset before its `ci` caller.
+
 ## Lints
 
 A repo lists its linters in `.github/lint-checks.json`, and this repo's own is a working example.
