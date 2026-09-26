@@ -3,8 +3,8 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints, checks action inputs, and runs the package and example
-> checks. PR conventions, Dependabot auto-merge, publishing and the setup scripts are on their way.
+> Under construction. For now it lints, checks action inputs, and runs the package, example and PR
+> checks. Dependabot auto-merge, publishing and the setup scripts are on their way.
 
 ## What's inside
 
@@ -19,6 +19,7 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
+| `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
 | `scripts/` | The shell the actions run |
 | `test/unit_tests/` | A spec for each script |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
