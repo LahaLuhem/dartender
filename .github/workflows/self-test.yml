@@ -40,6 +40,21 @@ jobs:
       # The fixtures aren't on Coveralls.
       coveralls: false
 
+  # Publishing as well, all but the upload, which only a real release can test.
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dart_package, flutter_package]
+    uses: ./.github/workflows/publish.yml
+    # What publish.yml's job asks for.
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: test/workflow_tests/${{ matrix.fixture }}
+      dry-run: true
+
   # Pushes to main have no pull request to check.
   conventions:
     if: github.event_name == 'pull_request'
@@ -56,7 +71,7 @@ jobs:
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, conventions, specs]
+    needs: [ci, fixtures, publish, conventions, specs]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -65,6 +80,7 @@ jobs:
           RESULTS: >-
             ci=${{ needs.ci.result }}
             fixtures=${{ needs.fixtures.result }}
+            publish=${{ needs.publish.result }}
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
         run: echo "$RESULTS"
