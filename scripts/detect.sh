@@ -32,9 +32,39 @@ echo "flutter=${flutter}"
 echo "example=${example}"
 echo "example-tests=${example_tests}"
 
+# Tracked files only, since a clone also has build output and the plugin links Flutter makes.
+files="$(git ls-files)"
+watched=''
+while IFS= read -r file; do
+  path="/${file}"
+  dir="${path%/*}"
+  ecosystem=''
+  case "${path}" in
+    # Test fixtures, not real dependencies.
+    */test/*) ;;
+    /.github/workflows/*.yml | /.github/workflows/*.yaml) ecosystem=github-actions dir=/ ;;
+    */pubspec.yaml) ecosystem=pub ;;
+    */settings.gradle | */settings.gradle.kts) ecosystem=gradle ;;
+    */uv.lock) ecosystem=uv ;;
+    */Package.swift) ecosystem=swift ;;
+    # Only composite actions have `uses:` lines to bump.
+    */action.yml | */action.yaml)
+      using="$(yq .runs.using "${file}")"
+      if [[ "${using}" == composite ]]; then ecosystem=github-actions; fi
+      ;;
+    *) ;;
+  esac
+  if [[ -n "${ecosystem}" ]]; then watched+="${ecosystem}"$'\t'"${dir:-/}"$'\n'; fi
+done <<< "${files}"
+dependabot="$(jq -R -n -c '[inputs | select(. != "")] | unique
+  | map(split("\t") | {"package-ecosystem": .[0], directory: .[1]})' <<< "${watched}")"
+echo "dependabot=${dependabot}"
+
 # Only Actions has a summary page, so a run anywhere else skips it.
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   names="$(jq -r '[.[].name] | join(", ")' <<< "${checks}")"
+  watching="$(jq -r 'map("`\(."package-ecosystem") \(.directory)`") | join(", ")' \
+    <<< "${dependabot}")"
   kind=none
   if [[ "${flutter}" == true ]]; then kind=Flutter; elif [[ "${package}" == true ]]; then kind="pure Dart"; fi
   shown=none
@@ -47,5 +77,6 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
 | Example | ${shown} |
 | Linters | ${names} |
 | Lint image | \`${image}\` |
+| Dependabot | ${watching:-none} |
 EOF
 fi
