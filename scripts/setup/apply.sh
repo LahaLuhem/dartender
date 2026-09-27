@@ -26,14 +26,21 @@ body="$(jq '
 ' "${here}/protected.example.json" --args ${checks[@]+"${checks[@]}"})"
 name="$(jq -r .name "${here}/protected.example.json")"
 
+# For when the API won't take the ruleset, like with a token that can't manage rulesets.
+by_hand() {
+  echo "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
+    "add each --check as a required check, then make sure it kept the admin bypass." >&2
+  exit 1
+}
+
 # Matched by name, so a second run updates the ruleset instead of adding another.
-rulesets="$(gh api --paginate "repos/${repo}/rulesets")"
+rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || by_hand
 id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
 if [[ -n ${id} ]]; then
-  gh api --silent --method PUT "repos/${repo}/rulesets/${id}" --input - <<< "${body}"
+  gh api --silent --method PUT "repos/${repo}/rulesets/${id}" --input - <<< "${body}" || by_hand
   echo "Ruleset ${name}: updated"
 else
-  gh api --silent --method POST "repos/${repo}/rulesets" --input - <<< "${body}"
+  gh api --silent --method POST "repos/${repo}/rulesets" --input - <<< "${body}" || by_hand
   echo "Ruleset ${name}: created"
 fi
 

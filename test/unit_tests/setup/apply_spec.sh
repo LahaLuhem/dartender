@@ -120,12 +120,31 @@ Describe 'setup/apply.sh'
     The result of function repo_edit_call should include '--delete-branch-on-merge'
   End
 
-  It 'stops at the first gh call that fails'
-    export FAIL_ON='api GET'
+  Describe "when the API won't take the ruleset"
+    Parameters
+      'api GET' '[]'
+      'api POST' '[]'
+      'api PUT' '[{"id": 42, "name": "Protected"}]'
+    End
+
+    It "says how to set it by hand and stops, when '$1' fails"
+      export FAIL_ON="$1" RULESETS="$2"
+      When run script "${apply}" owner/repo
+      The status should be failure
+      The error should include "${example}"
+      The contents of file "${CALLS}" should include "$1"
+      The contents of file "${CALLS}" should not include 'label create'
+      The contents of file "${CALLS}" should not include 'repo edit'
+    End
+  End
+
+  It 'stops at any other gh call that fails, without the reminder'
+    export FAIL_ON='label create'
     When run script "${apply}" owner/repo
     The status should be failure
-    The contents of file "${CALLS}" should include 'api GET'
-    The contents of file "${CALLS}" should not include 'label create'
+    The output should be present
+    The error should be blank
+    The contents of file "${CALLS}" should include 'label create'
     The contents of file "${CALLS}" should not include 'repo edit'
   End
 
