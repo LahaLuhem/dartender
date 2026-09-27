@@ -1,9 +1,10 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
 Describe 'detect.sh'
-  # A throwaway repo whose lint manifest holds $1. No argument, no manifest.
+  # A throwaway git repo whose lint manifest holds $1. No argument, no manifest.
   repo() {
     dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
+    git init -q "${dir}"
     mkdir "${dir}/.github"
     if [[ $# -gt 0 ]]; then printf '%s' "$1" > "${dir}/.github/lint-checks.json"; fi
     echo "${dir}"
@@ -32,10 +33,128 @@ Describe 'detect.sh'
     export GITHUB_STEP_SUMMARY="${summary}"
     expected="$(printf '%s\n' '### What dartender found' '| What | Found |' '|---|---|' \
       '| Package | none |' '| Example | none |' \
-      '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |")"
+      '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |" '| Dependabot | none |')"
     When run script scripts/detect.sh "${r}"
     The output should be present
     The contents of file "${summary}" should equal "${expected}"
+  End
+
+  Describe 'what Dependabot has to watch'
+    # Writes $3, or nothing, to the file $2 in the repo $1, and has git track it.
+    track() {
+      if [[ $2 == */* ]]; then mkdir -p "$1/${2%/*}"; fi
+      printf '%s' "${3-}" > "$1/$2"
+      git -C "$1" add "$2"
+    }
+
+    # Whether the dependabot line on stdin lists exactly these `<package-ecosystem> <directory>`
+    # pairs, in any order.
+    watches() {
+      local line actual want
+      line="$(grep '^dependabot=')" || return 1
+      actual="$(jq -r '.[] | "\(."package-ecosystem") \(.directory)"' <<< "${line#dependabot=}")" \
+        || return 1
+      actual="$(sort <<< "${actual}")"
+      want="$(printf '%s\n' "$@" | sort)"
+      [[ "${actual}" == "${want}" ]]
+    }
+
+    Describe 'each kind of manifest'
+      Parameters
+        'a pubspec' 'pubspec.yaml' 'pub /'
+        "an example's pubspec" 'example/pubspec.yaml' 'pub /example'
+        'a Gradle build' 'example/android/settings.gradle.kts' 'gradle /example/android'
+        'a Groovy Gradle build' 'android/settings.gradle' 'gradle /android'
+        'a uv project' 'benchmark/python/uv.lock' 'uv /benchmark/python'
+        'a Swift package' 'ios/a/Package.swift' 'swift /ios/a'
+        'a workflow' '.github/workflows/ci.yml' 'github-actions /'
+        'a workflow in a .yaml file' '.github/workflows/ci.yaml' 'github-actions /'
+      End
+
+      It "watches $1"
+        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+        track "${r}" "$2"
+        When run script scripts/detect.sh "${r}"
+        The output should satisfy watches "$3"
+      End
+    End
+
+    It 'watches each composite action in its own folder'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" .github/actions/a/action.yml $'runs:\n  using: composite\n  steps: []\n'
+      track "${r}" .github/actions/b/action.yaml $'runs:\n  using: composite\n  steps: []\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'github-actions /.github/actions/a' \
+        'github-actions /.github/actions/b'
+    End
+
+    It "leaves out an action that isn't composite, since it has no uses: to bump"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" .github/actions/a/action.yml $'runs:\n  using: composite\n  steps: []\n'
+      track "${r}" .github/actions/b/action.yml $'runs:\n  using: node24\n  main: index.js\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'github-actions /.github/actions/a'
+    End
+
+    It 'watches a folder once per ecosystem'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" .github/workflows/a.yml
+      track "${r}" .github/workflows/b.yml
+      track "${r}" pubspec.yaml
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'github-actions /' 'pub /'
+    End
+
+    It "leaves out files git doesn't track, like the plugin links in a clone's example"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml
+      mkdir -p "${r}/example/ios/.symlinks/plugins/a"
+      : > "${r}/example/ios/.symlinks/plugins/a/pubspec.yaml"
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /'
+    End
+
+    It 'leaves out test folders, which hold fixtures'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml
+      track "${r}" test/fixture/pubspec.yaml
+      track "${r}" packages/a/test/fixture/android/settings.gradle
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /'
+    End
+
+    It 'treats the folder it reads as the root, the way the self-test reads its fixtures'
+      r="$(repo)"
+      fixture="${r}/test/workflow_tests/a"
+      mkdir -p "${fixture}/.github"
+      printf '%s' '{"image":"img","checks":[{"name":"a","cmd":"a"}]}' \
+        > "${fixture}/.github/lint-checks.json"
+      track "${r}" test/workflow_tests/a/pubspec.yaml
+      track "${r}" test/workflow_tests/a/example/pubspec.yaml
+      When run script scripts/detect.sh "${fixture}"
+      The output should satisfy watches 'pub /' 'pub /example'
+    End
+
+    It 'lists them on the run summary page'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml
+      track "${r}" example/pubspec.yaml
+      summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+      export GITHUB_STEP_SUMMARY="${summary}"
+      When run script scripts/detect.sh "${r}"
+      The output should be present
+      The contents of file "${summary}" should include \
+        "| Dependabot | \`pub /\`, \`pub /example\` |"
+    End
+
+    It 'fails outside a git repo, instead of finding nothing to watch'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      rm -rf "${r}/.git"
+      When run script scripts/detect.sh "${r}"
+      The status should be failure
+      The output should be present
+      The stderr should be present
+    End
   End
 
   Describe 'the package'
