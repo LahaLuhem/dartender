@@ -12,7 +12,15 @@ config="$(jq '{version: 2, updates: map(. + {
   groups: {(."package-ecosystem"): {patterns: ["*"], "update-types": ["minor", "patch"]}}
 })}' <<< "${pairs}" | yq -p json '.updates[].groups[][] style="flow"')"
 
+header="# Written by dartender's scripts/setup/dependabot.sh, whose next run undoes hand edits."
+wanted="$(printf '%s\n' "${header}" "${config}")"
+
 file="${repo}/.github/dependabot.yml"
-printf '%s\n' "# Written by dartender's scripts/setup/dependabot.sh, which rewrites it each run." \
-  "${config}" > "${file}"
-success "Wrote ${file}"
+current=''
+if [[ -f ${file} ]]; then current="$(< "${file}")"; fi
+if [[ ${current} == "${wanted}" ]]; then
+  success "${file} is already up to date"
+else
+  printf '%s\n' "${wanted}" > "${file}"
+  success "Wrote ${file}"
+fi

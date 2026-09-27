@@ -12,6 +12,8 @@ of it, so this is mostly the part they can't see.
   [`scripts/setup/common.sh`](scripts/setup/common.sh) stops anything older on a laptop.
 - **Setup scripts talk through `common.sh`'s `info`, `success` and `error`,** so they all read the
   same and their errors land on stderr.
+- **Setup scripts leave alone what's already set, and say so,** so running them again is always
+  safe.
 
 ## Specs
 
@@ -26,6 +28,8 @@ a real package repo.
   trusting it.
 - **Each `Parameters` block gets a `Describe` of its own.** Blocks in one group pile their rows up,
   and nested groups inherit them.
+- **A setup script's spec covers each thing it sets three ways:** missing, different, and already
+  set. The last one catches a write that didn't need to happen.
 - **Fixtures come from the tool that makes real packages** (`flutter create`, `dart create`), and
   change only where a job needs it, so CI gets tested on what a package repo actually has.
 
