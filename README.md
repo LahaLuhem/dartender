@@ -3,9 +3,9 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints, checks action inputs, runs the package, example and PR
-> checks, auto-merges Dependabot's PRs and publishes to pub.dev. Workspaces and the
-> `dependabot.yml` setup script are on their way.
+> Under construction. For now it lints, checks action inputs and the Dependabot config, runs the
+> package, example and PR checks, auto-merges Dependabot's PRs and publishes to pub.dev. Workspaces
+> are on their way.
 
 ## What's inside
 
@@ -22,23 +22,28 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
+| `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
 | `scripts/` | The shell the actions run, and the seven `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | What a package repo's admin runs by hand, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
+| `test/utils/` | What the specs share, like a stand-in `gh` |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and a `publish.yml` dry-run against |
 
 ## Setting up a repo
 
-`scripts/setup/apply.sh` gives a package repo the ruleset, `sem-*` labels and merge settings the
-workflows count on. It needs `gh`, logged in as the repo's admin, and `jq`:
+`scripts/setup/setup.sh` writes a package repo's `.github/dependabot.yml`, then gives the repo the
+ruleset, `sem-*` labels and merge settings the workflows count on. Run it from the repo's root, with
+bash 5, `jq`, `yq` and `gh` logged in as the repo's admin:
 
 ```bash
-mkdir -p ~/.cache/dartender && curl -fsSL https://github.com/LahaLuhem/dartender/archive/main.tar.gz | tar -xz -C ~/.cache/dartender --strip-components=1 && ~/.cache/dartender/scripts/setup/apply.sh LahaLuhem/<repo>
+mkdir -p ~/.cache/dartender && curl -fsSL https://github.com/LahaLuhem/dartender/archive/main.tar.gz | tar -xz -C ~/.cache/dartender --strip-components=1 && ~/.cache/dartender/scripts/setup/setup.sh
 ```
 
 Add `--check <name>` for each gate of the repo's own, like `--check benchmark-ok`, so it's required
-next to `ci / ok` and `conventions / ok`. Run it again after the ruleset, labels or merge settings
-change here, since nothing keeps the repos in step on its own.
+next to `ci / ok` and `conventions / ok`. Then commit the `dependabot.yml`.
+
+It leaves alone whatever is already set, so run it again whenever that changes here, or when the
+repo gets something new for Dependabot to watch. CI's Dependabot config job says when.
 
 ## Calling it
 
