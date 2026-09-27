@@ -4,7 +4,8 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
 > Under construction. For now it lints, checks action inputs, runs the package, example and PR
-> checks, and auto-merges Dependabot's PRs. Publishing and the setup scripts are on their way.
+> checks, auto-merges Dependabot's PRs and publishes to pub.dev. Workspaces and the setup scripts
+> are on their way.
 
 ## What's inside
 
@@ -12,6 +13,7 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 |---|---|
 | `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
+| `.github/workflows/publish.yml` | Publishes a package repo's tagged release to pub.dev |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
@@ -22,18 +24,22 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 | `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
 | `scripts/` | The shell the actions run |
 | `test/unit_tests/` | A spec for each script |
-| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` against |
+| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and a `publish.yml` dry-run against |
 
 ## Calling it
 
 A package repo calls each workflow from a caller file of its own, with one job pinned to `@main`:
 `uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks, `ci / ok` and
-`conventions / ok`, take their names from these jobs, so keep them.
+`conventions / ok`, take their names from the `ci` and `conventions` jobs, so keep those.
 
 | Job | Calls | Grants | For |
 |---|---|---|---|
 | `ci` | `ci.yml` | `contents: write`, `pull-requests: write` | Auto-merging Dependabot's PRs |
 | `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
+| `publish` | `publish.yml` | `contents: read`, `id-token: write` | The OIDC token pub.dev takes instead of a login |
+
+The `publish` caller runs on pushed tags that match the package's pattern on pub.dev, like
+`'[0-9]+.[0-9]+.[0-9]+'` for `{{version}}`.
 
 If a caller grants less than a job asks for, the run won't start, even when that job would skip.
 With nothing required, `gh` merges Dependabot's PRs on the spot instead of waiting, so a repo gets
