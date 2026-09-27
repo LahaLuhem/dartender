@@ -1,44 +1,13 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
+Include test/utils/gh.sh
+
 Describe 'setup/apply.sh'
   apply="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/apply.sh"
   example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json"
   labels="${SHELLSPEC_PROJECT_ROOT}/scripts/sem-labels.json"
 
-  fresh_log() {
-    dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/apply.XXXXXX")"
-    export CALLS="${dir}/calls" BODY="${dir}/body.json" SETTINGS_BODY="${dir}/settings.json" \
-      RULESETS='[]' RULESET='{}' LABELS='[]' SETTINGS='{}' FAIL_ON=''
-    : > "${CALLS}"
-  }
-  BeforeEach 'fresh_log'
-
-  # Stands in for gh. Logs `api <method> <path>` whatever the flag order, keeps sent bodies,
-  # answers reads from the variables above, and fails a call matching ${FAIL_ON}.
-  Mock gh
-    method=GET path='' prev=''
-    for arg; do
-      if [[ ${prev} == --method ]]; then method="${arg}"; fi
-      if [[ ${arg} == repos/* ]]; then path="${arg}"; fi
-      prev="${arg}"
-    done
-    if [[ $1 == api ]]; then line="api ${method} ${path}"; else line="$*"; fi
-    echo "${line}" >> "${CALLS}"
-    if [[ -n ${FAIL_ON} && ${line} == *"${FAIL_ON}"* ]]; then exit 1; fi
-    if [[ " $* " == *" --input - "* ]]; then
-      if [[ ${path} == */rulesets* ]]; then cat > "${BODY}"; else cat > "${SETTINGS_BODY}"; fi
-    else
-      # Like a gh that reads stdin anyway, which would eat the rest of a loop's input.
-      cat > /dev/null
-    fi
-    case "${line}" in
-      'api GET repos/owner/repo/rulesets') printf '%s\n' "${RULESETS}" ;;
-      'api GET repos/owner/repo/rulesets/'*) printf '%s\n' "${RULESET}" ;;
-      'api GET repos/owner/repo/labels') printf '%s\n' "${LABELS}" ;;
-      'api GET repos/owner/repo') printf '%s\n' "${SETTINGS}" ;;
-      *) ;;
-    esac
-  End
+  BeforeEach 'fresh_gh'
 
   # Whether the JSON on stdin says the same as the file $1, whatever the formatting.
   same_json_as() {
@@ -153,13 +122,7 @@ Describe 'setup/apply.sh'
   End
 
   It 'changes nothing that is already set, and says so'
-    export RULESETS='[{"id": 42, "name": "Protected"}]'
-    # Plus the fields GitHub adds.
-    RULESET="$(jq -c '. + {id: 42, node_id: "RRS_1", source: "owner/repo", _links: {}}' \
-      "${example}")"
-    LABELS="$(jq -c 'map(. + {id: 1, default: false})' "${labels}")"
-    export RULESET LABELS SETTINGS='{"id": 1, "allow_auto_merge": true, "allow_rebase_merge": true,
-      "allow_squash_merge": false, "allow_merge_commit": false, "delete_branch_on_merge": true}'
+    already_set_up
     When run script "${apply}" owner/repo
     The status should be success
     The output should include 'already'
