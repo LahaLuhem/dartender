@@ -2,9 +2,10 @@
 # Sets a package repo's ruleset, sem-* labels and merge settings, with gh logged in as its admin.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
+source "${here}/common.sh"
 
 usage() {
-  echo "Usage: apply.sh <owner/repo> [--check <local gate>]..." >&2
+  error "Usage: apply.sh <owner/repo> [--check <local gate>]..."
   exit 2
 }
 
@@ -19,17 +20,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Local gates run on GitHub Actions like the shared ones, so they take the same integration id.
-# The `+` form because macOS's bash 3.2 calls an empty array unset, which `set -u` stops on.
 body="$(jq '
   (.rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks) |=
     . + [$ARGS.positional[] as $gate | {context: $gate, integration_id: .[0].integration_id}]
-' "${here}/protected.example.json" --args ${checks[@]+"${checks[@]}"})"
+' "${here}/protected.example.json" --args "${checks[@]}")"
 name="$(jq -r .name "${here}/protected.example.json")"
 
 # For when the API won't take the ruleset, like with a token that can't manage rulesets.
 by_hand() {
-  echo "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
-    "add each --check as a required check, then make sure it kept the admin bypass." >&2
+  error "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
+    "add each --check as a required check, then make sure it kept the admin bypass."
   exit 1
 }
 
@@ -38,10 +38,10 @@ rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || by_hand
 id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
 if [[ -n ${id} ]]; then
   gh api --silent --method PUT "repos/${repo}/rulesets/${id}" --input - <<< "${body}" || by_hand
-  echo "Ruleset ${name}: updated"
+  success "Ruleset ${name}: updated"
 else
   gh api --silent --method POST "repos/${repo}/rulesets" --input - <<< "${body}" || by_hand
-  echo "Ruleset ${name}: created"
+  success "Ruleset ${name}: created"
 fi
 
 labels="$(jq -r '.[] | [.name, .color, .description] | @tsv' "${here}/../sem-labels.json")"
