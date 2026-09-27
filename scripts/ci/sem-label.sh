@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2154  # actions/sem-label sets REPO and PR
 set -euo pipefail
-allowed=(sem-add sem-change sem-deprecate sem-remove sem-bugfix sem-security sem-skip)
+names="$(jq -r '.[].name' "$(dirname "${BASH_SOURCE[0]}")/../sem-labels.json")"
+mapfile -t allowed <<< "${names}"
 printf -v choices '%s, ' "${allowed[@]}"
 choices="${choices%, }"
 
