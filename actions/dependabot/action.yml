@@ -1,0 +1,20 @@
+name: Dependabot config
+description: Fails on anything for Dependabot to watch that the repo's dependabot.yml leaves out.
+
+inputs:
+  pairs:
+    description: What Dependabot has to watch, detect.sh's dependabot output.
+    required: true
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PAIRS: ${{ inputs.pairs }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/dependabot.sh"'

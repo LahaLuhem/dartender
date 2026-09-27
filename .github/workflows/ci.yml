@@ -38,6 +38,7 @@ jobs:
       flutter: ${{ steps.detect.outputs.flutter }}
       example: ${{ steps.detect.outputs.example }}
       example-tests: ${{ steps.detect.outputs.example-tests }}
+      dependabot: ${{ steps.detect.outputs.dependabot }}
       android-changed: ${{ steps.changes.outputs.android }}
     steps:
       - uses: actions/checkout@v7
@@ -92,6 +93,19 @@ jobs:
           persist-credentials: false
       - uses: $/actions/check-inputs
         with:
+          working-directory: ${{ inputs.working-directory }}
+
+  dependabot:
+    name: Dependabot config
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/dependabot
+        with:
+          pairs: ${{ needs.plan.outputs.dependabot }}
           working-directory: ${{ inputs.working-directory }}
 
   format:
@@ -259,6 +273,7 @@ jobs:
       - plan
       - lint
       - action-inputs
+      - dependabot
       - format
       - analyze
       - dependencies
@@ -276,6 +291,7 @@ jobs:
             plan=${{ needs.plan.result }}
             lint=${{ needs.lint.result }}
             action-inputs=${{ needs.action-inputs.result }}
+            dependabot=${{ needs.dependabot.result }}
             format=${{ needs.format.result }}
             analyze=${{ needs.analyze.result }}
             dependencies=${{ needs.dependencies.result }}

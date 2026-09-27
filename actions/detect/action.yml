@@ -25,6 +25,9 @@ outputs:
   example-tests:
     description: Whether that example has a test folder.
     value: ${{ steps.detect.outputs.example-tests }}
+  dependabot:
+    description: What Dependabot has to watch, as JSON pairs of package-ecosystem and directory.
+    value: ${{ steps.detect.outputs.dependabot }}
 
 runs:
   using: composite

@@ -1,0 +1,27 @@
+# Written by dartender's scripts/setup/dependabot.sh, whose next run undoes hand edits.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /example/android
+    schedule:
+      interval: weekly
+    groups:
+      gradle:
+        patterns: ['*']
+        update-types: [minor, patch]
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      pub:
+        patterns: ['*']
+        update-types: [minor, patch]
+  - package-ecosystem: pub
+    directory: /example
+    schedule:
+      interval: weekly
+    groups:
+      pub:
+        patterns: ['*']
+        update-types: [minor, patch]
