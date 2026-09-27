@@ -32,6 +32,10 @@ Describe 'setup/dependabot.sh'
     yq .version "${r}/.github/dependabot.yml"
   }
 
+  mtime() {
+    stat -c %Y "${r}/.github/dependabot.yml"
+  }
+
   It 'writes a weekly block for each folder and ecosystem Dependabot has to watch'
     r="$(repo "${manifest}")"
     track "${r}" .github/workflows/ci.yml
@@ -71,6 +75,19 @@ Describe 'setup/dependabot.sh'
     The output should be present
     The result of function blocks should equal 'pub /'
     The contents of file "${r}/.github/dependabot.yml" should not include '/gone'
+  End
+
+  It 'leaves the file alone when it is already up to date, and says so'
+    r="$(repo "${manifest}")"
+    track "${r}" pubspec.yaml
+    "${script}" "${r}" > /dev/null
+    # Backdated, so a rewrite would show even within the same second.
+    touch -t 200001010000 "${r}/.github/dependabot.yml"
+    stamp="$(mtime)"
+    When run script "${script}" "${r}"
+    The status should be success
+    The output should include 'already'
+    The result of function mtime should equal "${stamp}"
   End
 
   It 'leaves the file alone when detect.sh fails'
