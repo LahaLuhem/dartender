@@ -8,6 +8,10 @@ of it, so this is mostly the part they can't see.
   its reason on the same line.
 - **Anything with a branch or a loop goes in a script,** never a `run:` block, so it can have a
   spec.
+- **Bash 5, with no workarounds for macOS's 3.2.** CI and the spec image run 5, and
+  [`scripts/setup/common.sh`](scripts/setup/common.sh) stops anything older on a laptop.
+- **Setup scripts talk through `common.sh`'s `info`, `success` and `error`,** so they all read the
+  same and their errors land on stderr.
 
 ## Specs
 

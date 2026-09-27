@@ -2,6 +2,7 @@
 # Writes a package repo's .github/dependabot.yml from what detect.sh finds, for its admin to commit.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
+source "${here}/common.sh"
 repo="${1:-.}"
 
 pairs="$("${here}/../detect.sh" "${repo}" | sed -n 's/^dependabot=//p')"
@@ -14,4 +15,4 @@ config="$(jq '{version: 2, updates: map(. + {
 file="${repo}/.github/dependabot.yml"
 printf '%s\n' "# Written by dartender's scripts/setup/dependabot.sh, which rewrites it each run." \
   "${config}" > "${file}"
-echo "Wrote ${file}"
+success "Wrote ${file}"

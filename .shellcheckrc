@@ -1,1 +1,4 @@
 enable=all
+# So it reads what a script sources, like the setup scripts' common.sh.
+external-sources=true
+source-path=SCRIPTDIR
