@@ -13,12 +13,7 @@ usage() {
 [[ $# -gt 0 && $1 != -* ]] || usage
 repo="$1"
 shift
-checks=()
-while [[ $# -gt 0 ]]; do
-  [[ $1 == --check && $# -gt 1 ]] || usage
-  checks+=("$2")
-  shift 2
-done
+parse_checks "$@"
 
 # Compares only $want's fields, since GitHub adds its own, like ids and links.
 # shellcheck disable=SC2016  # a jq program, whose $want and $got are jq variables

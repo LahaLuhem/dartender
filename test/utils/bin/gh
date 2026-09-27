@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Stands in for gh in the specs, set up by fresh_gh in test/utils/gh.sh. Logs `api <method> <path>`
+# whatever the flag order, keeps sent bodies, answers reads, and fails a call matching ${FAIL_ON}.
+# shellcheck disable=SC2154  # fresh_gh exports what this reads
+method=GET path='' prev=''
+for arg; do
+  if [[ ${prev} == --method ]]; then method="${arg}"; fi
+  if [[ ${arg} == repos/* ]]; then path="${arg}"; fi
+  prev="${arg}"
+done
+if [[ $1 == api ]]; then line="api ${method} ${path}"; else line="$*"; fi
+echo "${line}" >> "${CALLS}"
+if [[ -n ${FAIL_ON} && ${line} == *"${FAIL_ON}"* ]]; then exit 1; fi
+if [[ " $* " == *" --input - "* ]]; then
+  if [[ ${path} == */rulesets* ]]; then cat > "${BODY}"; else cat > "${SETTINGS_BODY}"; fi
+else
+  # Like a gh that reads stdin anyway, which would eat the rest of a loop's input.
+  cat > /dev/null
+fi
+case "${line}" in
+  'repo view'*) echo owner/repo ;;
+  'api GET repos/owner/repo/rulesets') printf '%s\n' "${RULESETS}" ;;
+  'api GET repos/owner/repo/rulesets/'*) printf '%s\n' "${RULESET}" ;;
+  'api GET repos/owner/repo/labels') printf '%s\n' "${LABELS}" ;;
+  'api GET repos/owner/repo') printf '%s\n' "${SETTINGS}" ;;
+  *) ;;
+esac
