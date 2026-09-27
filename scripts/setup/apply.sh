@@ -19,10 +19,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Local gates run on GitHub Actions like the shared ones, so they take the same integration id.
+# The `+` form because macOS's bash 3.2 calls an empty array unset, which `set -u` stops on.
 body="$(jq '
   (.rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks) |=
     . + [$ARGS.positional[] as $gate | {context: $gate, integration_id: .[0].integration_id}]
-' "${here}/protected.example.json" --args "${checks[@]}")"
+' "${here}/protected.example.json" --args ${checks[@]+"${checks[@]}"})"
 name="$(jq -r .name "${here}/protected.example.json")"
 
 # Matched by name, so a second run updates the ruleset instead of adding another.
