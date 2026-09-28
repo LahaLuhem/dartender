@@ -65,7 +65,8 @@ The four in the middle only come up after a yes to the callers. A no leaves that
 ctrl+c stops the setup. Put `-y` after `setup.sh` to go with every starting answer without being
 asked, which is also the only way to run it without a terminal.
 
-Then look over what it wrote in `.github/`, and commit it.
+Then look over what it wrote in `.github/`, and commit it. The first run also says to delete the
+repo's older ruleset, if it has one, since nothing runs that one's required checks anymore.
 
 ### What it sets
 
@@ -88,8 +89,7 @@ A check only one repo runs, like a benchmark, goes in a ruleset of the repo's ow
 **Settings → Rules → Rulesets**. GitHub requires the checks of every ruleset on a branch, so both
 have to pass.
 
-- **Give it a name of its own.** The setup takes over the ruleset called `dartender`, or
-  `Protected` from before dartender.
+- **Give it a name of its own.** The setup takes over the one called `dartender`.
 - **Point it at the default branch, and add the check** by its job's `name:`, or the job's id when
   it has none.
 - **Add the repo's admins to its bypass list**, since each ruleset has its own.
@@ -115,9 +115,8 @@ comes in as `GH_TOKEN`.
 [`dependabot.sh`](scripts/setup/dependabot.sh) writes next already watches them. Last,
 [`apply.sh`](scripts/setup/apply.sh) sets up GitHub.
 
-A ruleset still called `Protected` gets renamed to `dartender` in the same update. If GitHub won't
-take the ruleset, say with a token that can't manage rulesets, it stops and says how to import it
-by hand.
+If GitHub won't take the ruleset, say with a token that can't manage rulesets, it stops and says
+how to import it by hand.
 
 </details>
 

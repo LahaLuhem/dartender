@@ -60,14 +60,13 @@ Describe 'setup/apply.sh'
     The contents of file "${CALLS}" should not include 'api POST'
   End
 
-  It 'renames a ruleset still called Protected, in the same call that updates it'
+  It 'leaves the ruleset from before dartender alone, and says to delete it'
     export RULESETS='[{"id": 42, "name": "Protected"}]'
     When run script "${apply}" owner/repo
     The status should be success
-    The output should include 'Protected'
-    The contents of file "${CALLS}" should include 'api PUT repos/owner/repo/rulesets/42'
-    The contents of file "${CALLS}" should not include 'api POST'
-    The contents of file "${BODY}" should satisfy same_json_as "${example}"
+    The output should include 'older ruleset'
+    The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
+    The contents of file "${CALLS}" should not include 'rulesets/42'
   End
 
   It 'leaves a ruleset with another name alone'

@@ -27,24 +27,20 @@ by_hand() {
   exit 1
 }
 
-# Matched by name, so a second run updates the ruleset instead of adding another. Until every repo
-# is on dartender, one may still be called Protected, which the update renames.
+# Matched by name, so a second run updates the ruleset instead of adding another.
 rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || by_hand
-match="$(jq -n -r --arg name "${name}" '[inputs[] | select(.name == $name or .name == "Protected")]
-  | .[0] // empty | "\(.id)\t\(.name)"' <<< "${rulesets}")"
-IFS=$'\t' read -r id was <<< "${match}"
+id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
 if [[ -z ${id} ]]; then
   gh api --silent --method POST "repos/${repo}/rulesets" --input - <<< "${body}" || by_hand
   success "Ruleset ${name}: created"
+  info "Delete the repo's older ruleset, if it has one, since nothing runs its required checks now."
 else
   ruleset="$(gh api "repos/${repo}/rulesets/${id}")" || by_hand
   if jq -e --argjson want "${body}" "${same}" <<< "${ruleset}" > /dev/null; then
     success "Ruleset ${name}: already set"
   else
     gh api --silent --method PUT "repos/${repo}/rulesets/${id}" --input - <<< "${body}" || by_hand
-    how=updated
-    if [[ ${was} != "${name}" ]]; then how="updated, and renamed from ${was}"; fi
-    success "Ruleset ${name}: ${how}"
+    success "Ruleset ${name}: updated"
   fi
 fi
 
