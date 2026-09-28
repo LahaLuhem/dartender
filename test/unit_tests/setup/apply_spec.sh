@@ -87,7 +87,7 @@ Describe 'setup/apply.sh'
 
   It 'rewrites only the labels that are missing or differ'
     # sem-add in another colour, and no sem-skip at all.
-    LABELS="$(jq -c 'map(select(.name != "sem-skip")
+    LABELS="$(jq -c 'map(select(.name != "sem-skip") | {name, color, description}
       | if .name == "sem-add" then .color = "000000" else . end | . + {id: 1})' "${labels}")"
     export LABELS
     expected="$(printf '%s\n' sem-add sem-skip)"

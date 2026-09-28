@@ -44,10 +44,11 @@ else
   fi
 fi
 
-# The sem-* labels that are missing or differ.
+# The sem-* labels that are missing or differ, ignoring the cider type, which GitHub doesn't keep.
 have="$(gh api --paginate "repos/${repo}/labels")"
-todo="$(jq -n -r --slurpfile want "${here}/../sem-labels.json" '[inputs[]] as $have
-  | $want[0][] | select(IN($have[] | {name, color, description}) | not)
+todo="$(jq -n -r --slurpfile want "${here}/../sem-labels.json" '
+  [inputs[] | {name, color, description}] as $have
+  | $want[0][] | {name, color, description} | select(IN($have[]) | not)
   | [.name, .color, .description, if (.name | IN($have[].name)) then "updated" else "created" end]
   | @tsv' <<< "${have}")"
 if [[ -z ${todo} ]]; then

@@ -1,9 +1,9 @@
 [
-  { "name": "sem-add", "color": "a2eeef", "description": "Changelog: Added" },
-  { "name": "sem-change", "color": "3dde55", "description": "Changelog: Changed" },
-  { "name": "sem-deprecate", "color": "fbca04", "description": "Changelog: Deprecated" },
-  { "name": "sem-remove", "color": "000000", "description": "Changelog: Removed" },
-  { "name": "sem-bugfix", "color": "d73a4a", "description": "Changelog: Fixed" },
-  { "name": "sem-security", "color": "5319e7", "description": "Changelog: Security" },
+  { "name": "sem-add", "color": "a2eeef", "description": "Changelog: Added", "cider": "added" },
+  { "name": "sem-change", "color": "3dde55", "description": "Changelog: Changed", "cider": "changed" },
+  { "name": "sem-deprecate", "color": "fbca04", "description": "Changelog: Deprecated", "cider": "deprecated" },
+  { "name": "sem-remove", "color": "000000", "description": "Changelog: Removed", "cider": "removed" },
+  { "name": "sem-bugfix", "color": "d73a4a", "description": "Changelog: Fixed", "cider": "fixed" },
+  { "name": "sem-security", "color": "5319e7", "description": "Changelog: Security", "cider": "security" },
   { "name": "sem-skip", "color": "ffffff", "description": "No changelog entry" }
 ]
