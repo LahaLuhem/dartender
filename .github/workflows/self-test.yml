@@ -55,6 +55,21 @@ jobs:
       working-directory: test/workflow_tests/${{ matrix.fixture }}
       dry-run: true
 
+  # The changelog line too, all but the commit. One fixture is enough, since cider doesn't care
+  # what kind of package it's in.
+  changelog:
+    uses: ./.github/workflows/changelog.yml
+    # What changelog.yml's jobs ask for.
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      working-directory: test/workflow_tests/dart_package
+      dry-run: true
+      # Stand-ins for a merged PR's, since dartender's own PRs carry no sem-* label.
+      label: sem-change
+      title: A line from dartender's self-test
+
   # Pushes to main have no pull request to check.
   conventions:
     if: github.event_name == 'pull_request'
@@ -81,7 +96,7 @@ jobs:
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, conventions, specs, setup-image]
+    needs: [ci, fixtures, publish, changelog, conventions, specs, setup-image]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -91,6 +106,7 @@ jobs:
             ci=${{ needs.ci.result }}
             fixtures=${{ needs.fixtures.result }}
             publish=${{ needs.publish.result }}
+            changelog=${{ needs.changelog.result }}
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
             setup-image=${{ needs.setup-image.result }}
