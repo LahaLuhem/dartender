@@ -4,8 +4,8 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
 > Under construction. For now it lints, checks action inputs and the Dependabot config, runs the
-> package, example and PR checks, auto-merges Dependabot's PRs and publishes to pub.dev. Workspaces
-> are on their way.
+> package, example and PR checks, auto-merges Dependabot's PRs, writes merged PRs' changelog lines
+> and publishes to pub.dev. Workspaces are on their way.
 
 ## How it fits together
 
@@ -15,7 +15,7 @@ small files of its own, plus some settings on GitHub that the jobs count on, and
 
 | In a package repo | What it's for |
 |---|---|
-| 3 caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml` and `publish.yml` from here, see [Calling it](#calling-it) |
+| 4 caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml` and `changelog.yml` from here, see [Calling it](#calling-it) |
 | `.github/lint-checks.json` | Which linters run, see [Lints](#lints) |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
@@ -72,10 +72,10 @@ repo's older ruleset, if it has one, since nothing runs that one's required chec
 
 | What | Where | Taken from |
 |---|---|---|
-| The `ci`, `conventions` and `publish` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), and your answers |
+| The `ci`, `conventions`, `publish` and `changelog` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), and your answers |
 | `lint-checks.json` | `.github/`, for you to commit | The same |
 | `dependabot.yml`, a weekly block for each folder Dependabot has to watch | `.github/`, for you to commit | The repo's files, new ones included |
-| The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
+| The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` and lets the changelog App past | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
 | The seven `sem-*` labels, one per changelog section | GitHub | [`sem-labels.json`](scripts/sem-labels.json) |
 | Merge settings, like rebase merges only and auto-merge | GitHub | [`apply.sh`](scripts/setup/apply.sh) |
 
@@ -92,7 +92,8 @@ have to pass.
 - **Give it a name of its own.** The setup takes over the one called `dartender`.
 - **Point it at the default branch, and add the check** by its job's `name:`, or the job's id when
   it has none.
-- **Add the repo's admins to its bypass list**, since each ruleset has its own.
+- **Add the repo's admins and the changelog App to its bypass list**, since each ruleset has its
+  own and the App's changelog commit has to get past every one.
 
 ### When to run it again
 
@@ -131,11 +132,18 @@ A package repo calls each workflow from a caller that `setup.sh` writes, with on
 | `ci` | `ci.yml` | `contents: write`, `pull-requests: write` | Auto-merging Dependabot's PRs |
 | `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
 | `publish` | `publish.yml` | `contents: read`, `id-token: write` | The OIDC token pub.dev takes instead of a login |
+| `changelog` | `changelog.yml` | `contents: read`, `pull-requests: read` | Reading the merged PR. The App's token does the writing |
 
 If a caller grants less than a job asks for, the run won't start, even when that job would skip.
 
 The `publish` caller runs on tags like `1.2.3`, so set the package's tag pattern on pub.dev to
 `{{version}}`.
+
+The `changelog` caller runs on each push to the default branch. For a merged PR it adds the PR's
+title to `CHANGELOG.md`, under the section its `sem-*` label names, and `sem-skip` and Dependabot's
+PRs get none. The commit goes in with the changelog App's token, which the ruleset lets past, so
+the repo needs the App installed, its ID in an `APP_ID` variable and its private key in an
+`APP_PRIVATE_KEY` secret. The setup doesn't make those.
 
 The ruleset has to be in place before the `ci` caller lands. Until it requires `ci / ok`, `gh`
 merges Dependabot's PRs on the spot instead of waiting for CI. A run that says yes to GitHub takes
@@ -155,6 +163,7 @@ one repo needs goes in a workflow of that repo's own, since the setup's next run
 | `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/publish.yml` | Publishes a package repo's tagged release to pub.dev |
+| `.github/workflows/changelog.yml` | Writes merged PRs' lines in a package repo's `CHANGELOG.md` |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
@@ -164,12 +173,14 @@ one repo needs goes in a workflow of that repo's own, since the setup's next run
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
 | `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
+| `actions/changelog-type/` | Finds the PR a pushed commit came from, and the changelog section its line goes under |
+| `actions/changelog/` | Adds that line with cider, and commits it through the contents API |
 | `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
 | `scripts/` | The shell the actions run, and the seven `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
 | `test/utils/` | What the specs share, like stand-ins for `gh` and `docker` |
-| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and a `publish.yml` dry-run against |
+| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against |
 
 ## Specs
 
@@ -186,5 +197,5 @@ the commit being run, so a PR tests its own version of everything.
 Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.md).
 
 Commits here are [conventional](https://www.conventionalcommits.org), so `git cliff` turns the
-history into a changelog. The package repos stick to one changelog entry per PR, written at
-release time.
+history into a changelog. The package repos stick to one changelog entry per PR, which
+`changelog.yml` writes as the PR merges.
