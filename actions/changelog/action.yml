@@ -1,0 +1,41 @@
+name: Changelog
+description: Adds a line to the package's CHANGELOG.md with cider, and commits it to the branch.
+
+inputs:
+  working-directory:
+    description: Folder of the package.
+    default: .
+  repo:
+    description: The repository, as owner/name.
+    required: true
+  branch:
+    description: The branch that was checked out, which the commit goes to.
+    required: true
+  type:
+    description: The cider type the line goes under.
+    required: true
+  title:
+    description: The line.
+    required: true
+  token:
+    description: A token that can commit to the branch past its rulesets, like the changelog App's.
+    default: ""
+  dry-run:
+    description: >-
+      Shows the line without committing it, true or false. Only dartender's self-test sets it.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        REPO: ${{ inputs.repo }}
+        BRANCH: ${{ inputs.branch }}
+        TYPE: ${{ inputs.type }}
+        TITLE: ${{ inputs.title }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        GH_TOKEN: ${{ inputs.token }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/changelog.sh"'
