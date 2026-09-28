@@ -22,3 +22,5 @@ if [[ " ${allowed[*]} " != *" ${sems[0]} "* ]]; then
   echo "::error::${sems[0]} isn't a sem-* label this repo uses. Pick one of ${choices}."
   exit 1
 fi
+# changelog-type.sh reads which one it was.
+echo "${sems[0]}"

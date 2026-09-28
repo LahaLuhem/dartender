@@ -24,10 +24,11 @@ Describe 'ci/sem-label.sh'
       sem-skip
     End
 
-    It "passes $1"
+    It "passes $1, and names it"
       export LABELS=$'bug\n'"$1"
       When run script "${check}"
       The status should be success
+      The output should equal "$1"
     End
   End
 
