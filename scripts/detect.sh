@@ -32,10 +32,12 @@ echo "flutter=${flutter}"
 echo "example=${example}"
 echo "example-tests=${example_tests}"
 
-# Tracked files only, since a clone also has build output and the plugin links Flutter makes.
-files="$(git ls-files)"
+# New files count too, so setup.sh's dependabot.yml covers the callers written in the same run.
+files="$(git ls-files --cached --others --exclude-standard)"
 watched=''
 while IFS= read -r file; do
+  # --cached still lists a file that's deleted but not committed yet.
+  if [[ ! -e "${file}" ]]; then continue; fi
   path="/${file}"
   dir="${path%/*}"
   ecosystem=''
