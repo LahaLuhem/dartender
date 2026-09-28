@@ -18,6 +18,7 @@ else
   cat > /dev/null
 fi
 case "${line}" in
+  'auth token') echo stand-in-token ;;
   'repo view'*) echo owner/repo ;;
   'api GET repos/owner/repo/rulesets') printf '%s\n' "${RULESETS}" ;;
   'api GET repos/owner/repo/rulesets/'*) printf '%s\n' "${RULESET}" ;;

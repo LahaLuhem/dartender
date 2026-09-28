@@ -69,9 +69,19 @@ jobs:
           persist-credentials: false
       - run: test/run.sh
 
+  # So a Dependabot bump that breaks the image setup.sh runs in can't merge.
+  setup-image:
+    name: Setup image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: docker build --tag dartender-setup - < scripts/setup/Dockerfile
+
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, conventions, specs]
+    needs: [ci, fixtures, publish, conventions, specs, setup-image]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -83,6 +93,7 @@ jobs:
             publish=${{ needs.publish.result }}
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
+            setup-image=${{ needs.setup-image.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1

@@ -3,102 +3,71 @@
 Include test/utils/repo.sh
 Include test/utils/gh.sh
 
-# The two scripts it runs have specs of their own, so this covers what chaining them can break.
+# What runs inside the container has a spec of its own, inside_spec.sh, so this covers the handover.
 Describe 'setup/setup.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/setup.sh"
-  manifest='{"image":"img","checks":[{"name":"a","cmd":"a"}]}'
 
   BeforeEach 'fresh_gh'
 
-  sent_checks() {
-    jq -r '.rules[] | select(.type == "required_status_checks")
-      | .parameters.required_status_checks[].context' "${BODY}"
+  run_call() {
+    grep '^docker run ' "${CALLS}" || :
   }
 
-  mtime() {
-    stat -c %Y "${r}/.github/dependabot.yml"
-  }
-
-  writes() {
-    grep -vE '^(api GET |repo view )' "${CALLS}" || :
-  }
-
-  It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"
-    r="$(repo "${manifest}")"
-    track "${r}" pubspec.yaml
+  It 'builds its image, then runs the setup in it on the repo it was started in'
+    r="$(repo)"
     cd "${r}" || return
     When run script "${script}"
     The status should be success
     The output should be present
-    The file "${r}/.github/dependabot.yml" should be exist
-    The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
-    The contents of file "${CALLS}" should include 'api PATCH repos/owner/repo'
+    The line 1 of contents of file "${CALLS}" should start with 'docker build '
+    The result of function run_call should include "--volume ${r}:/repo --workdir /repo"
+    The result of function run_call should include "--volume ${SHELLSPEC_PROJECT_ROOT}:/dartender"
+    The result of function run_call should include ' /dartender/scripts/setup/inside.sh'
   End
 
-  It 'hands each --check on to the ruleset'
-    r="$(repo "${manifest}")"
-    track "${r}" pubspec.yaml
+  It "hands the container the admin's GitHub token, keeping it off docker's command line"
+    r="$(repo)"
+    cd "${r}" || return
+    When run script "${script}"
+    The status should be success
+    The output should be present
+    The result of function run_call should include '--env GH_TOKEN '
+    The result of function run_call should not include 'stand-in-token'
+    The contents of file "${CALLS}" should include 'with GH_TOKEN=stand-in-token'
+  End
+
+  It 'hands its arguments on to the setup'
+    r="$(repo)"
     cd "${r}" || return
     When run script "${script}" --check bench-ok
     The status should be success
     The output should be present
-    The result of function sent_checks should include 'bench-ok'
+    The result of function run_call should end with 'inside.sh --check bench-ok'
   End
 
-  It 'changes nothing on a repo that is already set up, and says so'
-    r="$(repo "${manifest}")"
-    track "${r}" pubspec.yaml
-    "${SHELLSPEC_PROJECT_ROOT}/scripts/setup/dependabot.sh" "${r}" > /dev/null
-    # Backdated, so a rewrite would show even within the same second.
-    touch -t 200001010000 "${r}/.github/dependabot.yml"
-    stamp="$(mtime)"
-    already_set_up
-    cd "${r}" || return
-    When run script "${script}"
-    The status should be success
-    The output should include 'already'
-    The result of function mtime should equal "${stamp}"
-    The result of function writes should be blank
-  End
-
-  It "leaves GitHub alone when it can't write the dependabot.yml"
-    # No lint manifest, which detect.sh stops on.
+  It 'fails when the setup inside the container fails'
     r="$(repo)"
+    export FAIL_ON='docker run'
     cd "${r}" || return
     When run script "${script}"
     The status should be failure
     The output should be present
-    The stderr should be present
-    The contents of file "${CALLS}" should not include 'api '
   End
 
-  It "changes nothing when it can't tell which GitHub repo it's in"
-    r="$(repo "${manifest}")"
-    track "${r}" pubspec.yaml
-    export FAIL_ON='repo view'
-    cd "${r}" || return
-    When run script "${script}"
-    The status should be failure
-    The file "${r}/.github/dependabot.yml" should not be exist
-    The contents of file "${CALLS}" should not include 'api '
-  End
-
-  Describe 'a command line it refuses before doing anything'
+  Describe 'what stops it before the setup runs'
     Parameters
-      '--help'
-      '--check'
-      'owner/repo'
+      "gh isn't logged in" 'auth token'
+      "the image won't build" 'docker build'
     End
 
-    It "refuses '$1'"
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
+    It "stops when $1"
+      r="$(repo)"
+      export FAIL_ON="$2"
       cd "${r}" || return
-      When run script "${script}" "$1"
+      When run script "${script}"
       The status should be failure
-      The error should be present
-      The file "${r}/.github/dependabot.yml" should not be exist
-      The contents of file "${CALLS}" should equal ''
+      The output should be present
+      The result of function run_call should be blank
     End
   End
 End

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Stands in for docker in the specs, set up by fresh_gh in test/utils/gh.sh. Logs each call and the
+# GH_TOKEN it got, eats a build's Dockerfile, and fails a call matching ${FAIL_ON}.
+# shellcheck disable=SC2154  # fresh_gh exports what this reads
+echo "docker $*" >> "${CALLS}"
+echo "  with GH_TOKEN=${GH_TOKEN-}" >> "${CALLS}"
+if [[ $1 == build ]]; then cat > /dev/null; fi
+if [[ -n ${FAIL_ON} && "docker $*" == *"${FAIL_ON}"* ]]; then exit 1; fi
