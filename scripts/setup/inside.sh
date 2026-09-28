@@ -5,7 +5,7 @@ here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
 
 usage() {
-  error "Usage: setup.sh [-y] [--check <local gate>]..."
+  error "Usage: setup.sh [-y]"
   exit 2
 }
 
@@ -22,11 +22,12 @@ ask() {
   if [[ ${rc} -eq 1 ]]; then answer=false; fi
 }
 
-# Sets answer to what gets typed for $1, starting from $2, which -y takes as it is.
+# Sets answer to what gets typed for $1, starting from $2, which -y takes as it is. $3 is write for
+# more than one line.
 ask_for() {
   answer="$2"
   if [[ ${yes} == true ]]; then return; fi
-  answer="$(gum input --header "$1" --value "$2")"
+  answer="$(gum "${3:-input}" --header "$1" --value "$2")"
 }
 
 # What the repo's ci caller passes for the input $1 now, or else ci.yml's own default for it.
@@ -41,12 +42,30 @@ caller_value() {
   fi
 }
 
+# The checks the repo's ruleset requires besides the shared ones, once it requires the shared ones.
+# Until then it's from before dartender, and names old gates that -y mustn't keep.
+ruleset_checks() {
+  local example="${here}/protected.example.json" name rulesets id ruleset
+  name="$(jq -r .name "${example}")"
+  # apply.sh says what to do when GitHub won't show the rulesets.
+  rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || return 0
+  id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
+  if [[ -z ${id} ]]; then return 0; fi
+  ruleset="$(gh api "repos/${repo}/rulesets/${id}")"
+  jq -r --slurpfile example "${example}" '
+    def checks: [.rules[] | select(.type == "required_status_checks")
+      | .parameters.required_status_checks[].context];
+    ($example[0] | checks) as $shared | checks as $have
+    | if ($shared - $have | length) == 0 then ($have - $shared)[] else empty end
+  ' <<< "${ruleset}"
+}
+
 yes=false
 if [[ ${1-} == -y ]]; then
   yes=true
   shift
 fi
-parse_checks "$@"
+[[ $# -eq 0 ]] || usage
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 info "Setting up ${repo}"
 # Before dependabot.yml, which then covers them.
@@ -79,7 +98,14 @@ else
 fi
 ask "Set the ruleset, sem-* labels and merge settings on GitHub?"
 if [[ ${answer} == true ]]; then
-  "${here}/apply.sh" "${repo}" "$@"
+  current="$(ruleset_checks)"
+  ask_for "The repo's own checks to require, one per line" "${current}" write
+  checks=()
+  mapfile -t lines <<< "${answer}"
+  for line in "${lines[@]}"; do
+    if [[ ${line} == *[![:space:]]* ]]; then checks+=(--check "${line}"); fi
+  done
+  "${here}/apply.sh" "${repo}" "${checks[@]}"
 else
   info "Left the settings on GitHub as they are"
 fi

@@ -39,10 +39,10 @@ Describe 'setup/setup.sh'
   It 'hands its arguments on to the setup'
     r="$(repo)"
     cd "${r}" || return
-    When run script "${script}" -y --check bench-ok
+    When run script "${script}" -y
     The status should be success
     The output should be present
-    The result of function run_call should end with 'inside.sh -y --check bench-ok'
+    The result of function run_call should end with 'inside.sh -y'
   End
 
   It 'fails when the setup inside the container fails'

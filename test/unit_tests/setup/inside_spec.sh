@@ -42,6 +42,23 @@ Describe 'setup/inside.sh'
       "${SHELLSPEC_PROJECT_ROOT}/.github/workflows/ci.yml"
   }
 
+  # Gives owner/repo a Protected ruleset that requires exactly the checks named.
+  # shellcheck disable=SC2016  # jq programs, whose $ARGS and $checks are jq variables
+  ruleset_with() {
+    local checks
+    checks="$(jq -c -n '[$ARGS.positional[] | {context: ., integration_id: 15368}]' --args "$@")"
+    RULESET="$(jq -c --argjson checks "${checks}" '(.rules[]
+      | select(.type == "required_status_checks") | .parameters.required_status_checks) = $checks
+      | . + {id: 42}' "${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json")"
+    export RULESET RULESETS='[{"id": 42, "name": "Protected"}]'
+  }
+
+  # How many of the checks sent for the ruleset have a blank name.
+  blank_checks() {
+    jq '[.rules[] | select(.type == "required_status_checks")
+      | .parameters.required_status_checks[].context | select(test("^\\s*$"))] | length' "${BODY}"
+  }
+
   It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"
     r="$(repo "${manifest}")"
     track "${r}" pubspec.yaml
@@ -52,16 +69,6 @@ Describe 'setup/inside.sh'
     The file "${r}/.github/dependabot.yml" should be exist
     The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
     The contents of file "${CALLS}" should include 'api PATCH repos/owner/repo'
-  End
-
-  It 'hands each --check on to the ruleset'
-    r="$(repo "${manifest}")"
-    track "${r}" pubspec.yaml
-    cd "${r}" || return
-    When run script "${script}" --check bench-ok
-    The status should be success
-    The output should be present
-    The result of function sent_checks should include 'bench-ok'
   End
 
   It 'changes nothing on a repo that is already set up, and says so'
@@ -257,6 +264,70 @@ Describe 'setup/inside.sh'
       The contents of file "${CALLS}" should not include 'gum '
       The result of function make_call should end with \
         '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+    End
+  End
+
+  Describe "the repo's own checks"
+    It 'starts from the ones its ruleset requires besides the shared ones, and keeps them'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      already_set_up
+      ruleset_with 'ci / ok' 'conventions / ok' bench-ok
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function asked should include '--value bench-ok'
+      The contents of file "${CALLS}" should not include 'api PUT'
+    End
+
+    It "starts from none on a ruleset that doesn't require the shared checks yet"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      # Like a repo's ruleset from before dartender.
+      ruleset_with repo-ok package-ok
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function sent_checks should not include 'repo-ok'
+    End
+
+    It 'requires each check typed, one per line'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export TYPE_ON='own checks' TYPED=$'bench-ok\nBrowser tests (dart2js + dart2wasm)'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function sent_checks should include 'bench-ok'
+      The result of function sent_checks should include 'Browser tests (dart2js + dart2wasm)'
+    End
+
+    It 'leaves blank lines out'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export TYPE_ON='own checks' TYPED=$'bench-ok\n\n  \n'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function sent_checks should include 'bench-ok'
+      The result of function blank_checks should equal 0
+    End
+
+    It 'asks nothing under -y, keeping the ones the ruleset requires'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      already_set_up
+      ruleset_with 'ci / ok' 'conventions / ok' bench-ok
+      cd "${r}" || return
+      When run script "${script}" -y
+      The status should be success
+      The output should be present
+      The contents of file "${CALLS}" should not include 'gum '
+      The contents of file "${CALLS}" should not include 'api PUT'
     End
   End
 

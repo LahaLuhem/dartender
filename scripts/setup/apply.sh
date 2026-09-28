@@ -13,7 +13,12 @@ usage() {
 [[ $# -gt 0 && $1 != -* ]] || usage
 repo="$1"
 shift
-parse_checks "$@"
+checks=()
+while [[ $# -gt 0 ]]; do
+  [[ $1 == --check && $# -gt 1 ]] || usage
+  checks+=("$2")
+  shift 2
+done
 
 # Compares only $want's fields, since GitHub adds its own, like ids and links.
 # shellcheck disable=SC2016  # a jq program, whose $want and $got are jq variables
@@ -29,7 +34,7 @@ name="$(jq -r .name "${here}/protected.example.json")"
 # For when the API won't take the ruleset, like with a token that can't manage rulesets.
 by_hand() {
   error "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
-    "add each --check as a required check, then make sure it kept the admin bypass."
+    "add the repo's own checks as required checks, then make sure it kept the admin bypass."
   exit 1
 }
 
