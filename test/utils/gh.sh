@@ -1,12 +1,12 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
 
-# Puts the stand-in gh and docker first on PATH, with a fresh log and owner/repo set up with nothing.
+# Puts the stand-ins first on PATH, with a fresh log and owner/repo set up with nothing.
 fresh_gh() {
   dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/gh.XXXXXX")"
   export PATH="${SHELLSPEC_PROJECT_ROOT}/test/utils/bin:${PATH}" CALLS="${dir}/calls" \
     BODY="${dir}/body.json" SETTINGS_BODY="${dir}/settings.json" \
-    RULESETS='[]' RULESET='{}' LABELS='[]' SETTINGS='{}' FAIL_ON=''
+    RULESETS='[]' RULESET='{}' LABELS='[]' SETTINGS='{}' FAIL_ON='' DECLINE_ON='' ABORT_ON=''
   : > "${CALLS}"
 }
 

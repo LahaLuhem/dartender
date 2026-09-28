@@ -20,7 +20,7 @@ Describe 'setup/inside.sh'
   }
 
   writes() {
-    grep -vE '^(api GET |repo view )' "${CALLS}" || :
+    grep -vE '^(api GET |repo view |gum )' "${CALLS}" || :
   }
 
   It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"
@@ -81,6 +81,56 @@ Describe 'setup/inside.sh'
     The status should be failure
     The file "${r}/.github/dependabot.yml" should not be exist
     The contents of file "${CALLS}" should not include 'api '
+  End
+
+  Describe 'asking before each part'
+    It 'leaves the dependabot.yml alone when told no, and still sets up GitHub'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export DECLINE_ON='dependabot.yml'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The file "${r}/.github/dependabot.yml" should not be exist
+      The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
+    End
+
+    It 'leaves GitHub alone when told no, and still writes the dependabot.yml'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export DECLINE_ON='GitHub'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The file "${r}/.github/dependabot.yml" should be exist
+      The result of function writes should be blank
+    End
+
+    It 'stops at ctrl+c instead of taking it as a no'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export ABORT_ON='dependabot.yml'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should equal 130
+      The output should be present
+      The file "${r}/.github/dependabot.yml" should not be exist
+      The result of function writes should be blank
+    End
+
+    It 'asks nothing under -y, and does every part'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      cd "${r}" || return
+      When run script "${script}" -y
+      The status should be success
+      The output should be present
+      The contents of file "${CALLS}" should not include 'gum '
+      The file "${r}/.github/dependabot.yml" should be exist
+      The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
+    End
   End
 
   Describe 'a command line it refuses before doing anything'
