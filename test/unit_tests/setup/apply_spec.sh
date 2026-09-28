@@ -170,6 +170,7 @@ Describe 'setup/apply.sh'
       '--help'
       '--check bench-ok'
       'owner/repo --bogus'
+      'owner/repo --bogus x'
       'owner/repo --check'
     End
 
