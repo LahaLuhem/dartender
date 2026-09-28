@@ -27,9 +27,12 @@ by_hand() {
   exit 1
 }
 
-# Matched by name, so a second run updates the ruleset instead of adding another.
+# Matched by name, so a second run updates the ruleset instead of adding another. Until every repo
+# is on dartender, one may still be called Protected, which the update renames.
 rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || by_hand
-id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
+match="$(jq -n -r --arg name "${name}" '[inputs[] | select(.name == $name or .name == "Protected")]
+  | .[0] // empty | "\(.id)\t\(.name)"' <<< "${rulesets}")"
+IFS=$'\t' read -r id was <<< "${match}"
 if [[ -z ${id} ]]; then
   gh api --silent --method POST "repos/${repo}/rulesets" --input - <<< "${body}" || by_hand
   success "Ruleset ${name}: created"
@@ -39,7 +42,9 @@ else
     success "Ruleset ${name}: already set"
   else
     gh api --silent --method PUT "repos/${repo}/rulesets/${id}" --input - <<< "${body}" || by_hand
-    success "Ruleset ${name}: updated"
+    how=updated
+    if [[ ${was} != "${name}" ]]; then how="updated, and renamed from ${was}"; fi
+    success "Ruleset ${name}: ${how}"
   fi
 fi
 

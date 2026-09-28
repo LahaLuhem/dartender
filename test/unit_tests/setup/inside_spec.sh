@@ -42,15 +42,16 @@ Describe 'setup/inside.sh'
       "${SHELLSPEC_PROJECT_ROOT}/.github/workflows/ci.yml"
   }
 
-  # Gives owner/repo a Protected ruleset that requires exactly the checks named.
+  # Gives owner/repo the example ruleset, requiring exactly the checks named.
   # shellcheck disable=SC2016  # jq programs, whose $ARGS and $checks are jq variables
   ruleset_with() {
-    local checks
+    local example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json" checks
     checks="$(jq -c -n '[$ARGS.positional[] | {context: ., integration_id: 15368}]' --args "$@")"
     RULESET="$(jq -c --argjson checks "${checks}" '(.rules[]
       | select(.type == "required_status_checks") | .parameters.required_status_checks) = $checks
-      | . + {id: 42}' "${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json")"
-    export RULESET RULESETS='[{"id": 42, "name": "Protected"}]'
+      | . + {id: 42}' "${example}")"
+    RULESETS="$(jq -c '[{id: 42, name: .name}]' "${example}")"
+    export RULESET RULESETS
   }
 
   It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"

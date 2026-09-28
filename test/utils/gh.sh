@@ -14,11 +14,12 @@ fresh_gh() {
 # Gives owner/repo the example ruleset, the sem-* labels and the merge settings, each with the
 # fields GitHub adds.
 already_set_up() {
-  RULESET="$(jq -c '. + {id: 42, node_id: "RRS_1", source: "owner/repo", _links: {}}' \
-    "${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json")"
+  local example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json"
+  RULESET="$(jq -c '. + {id: 42, node_id: "RRS_1", source: "owner/repo", _links: {}}' "${example}")"
+  RULESETS="$(jq -c '[{id: 42, name: .name}]' "${example}")"
   LABELS="$(jq -c 'map(. + {id: 1, default: false})' \
     "${SHELLSPEC_PROJECT_ROOT}/scripts/sem-labels.json")"
-  export RULESET LABELS RULESETS='[{"id": 42, "name": "Protected"}]' SETTINGS='{"id": 1,
+  export RULESET RULESETS LABELS SETTINGS='{"id": 1,
     "allow_auto_merge": true, "allow_rebase_merge": true, "allow_squash_merge": false,
     "allow_merge_commit": false, "delete_branch_on_merge": true}'
 }
