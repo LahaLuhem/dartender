@@ -158,6 +158,108 @@ Describe 'setup/inside.sh'
     End
   End
 
+  Describe "the ci caller's inputs"
+    # Gives the repo in r a ci caller whose inputs all differ from ci.yml's defaults.
+    with_caller() {
+      local caller
+      caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
+        '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
+      track "${r}" .github/workflows/ci.yml "${caller}"
+    }
+
+    It "starts each question from what the repo's ci caller passes now"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      with_caller
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function asked should include '--default=false Upload coverage to Coveralls?'
+      The result of function asked should include '--value 90'
+      The result of function asked should include '--value lib/x.dart'
+    End
+
+    Describe 'what gets typed'
+      Parameters
+        'the lowest coverage' 'coverage that passes' 80 '--min_coverage 80 '
+        'the excludes' 'space-separated' 'lib/y.dart' '--coverage_excludes lib/y.dart'
+      End
+
+      It "takes what gets typed for $1 over what the repo has now"
+        r="$(repo "${manifest}")"
+        track "${r}" pubspec.yaml
+        with_caller
+        export TYPE_ON="$2" TYPED="$3"
+        cd "${r}" || return
+        When run script "${script}"
+        The status should be success
+        The output should be present
+        The result of function make_call should include "$4"
+      End
+    End
+
+    It 'takes a no to Coveralls when the repo has it on'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export DECLINE_ON='Coveralls'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--coveralls false '
+    End
+
+    It 'takes a yes to Coveralls when the repo has it off'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      with_caller
+      export ACCEPT_ON='Coveralls'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--coveralls true '
+    End
+
+    It "stops before writing anything at a lowest coverage that isn't a number"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export TYPE_ON='coverage that passes' TYPED='ninety'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be failure
+      The output should be present
+      The error should include 'Invalid input'
+      The result of function make_call should be blank
+      The file "${r}/.github/dependabot.yml" should not be exist
+    End
+
+    It 'stops at ctrl+c in an input, instead of taking what was there'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export ABORT_ON='coverage that passes'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should equal 130
+      The output should be present
+      The result of function make_call should be blank
+    End
+
+    It "asks nothing under -y, keeping what the repo's ci caller passes now"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      with_caller
+      cd "${r}" || return
+      When run script "${script}" -y
+      The status should be success
+      The output should be present
+      The contents of file "${CALLS}" should not include 'gum '
+      The result of function make_call should end with \
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+    End
+  End
+
   Describe 'asking before each part'
     It 'leaves the dependabot.yml alone when told no, and still sets up GitHub'
       r="$(repo "${manifest}")"

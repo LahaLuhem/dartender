@@ -7,7 +7,7 @@ fresh_gh() {
   export PATH="${SHELLSPEC_PROJECT_ROOT}/test/utils/bin:${PATH}" CALLS="${dir}/calls" \
     BODY="${dir}/body.json" SETTINGS_BODY="${dir}/settings.json" \
     RULESETS='[]' RULESET='{}' LABELS='[]' SETTINGS='{}' FAIL_ON='' DECLINE_ON='' ABORT_ON='' \
-    MASON_RC=70
+    ACCEPT_ON='' TYPE_ON='' TYPED='' MASON_RC=70
   : > "${CALLS}"
 }
 
