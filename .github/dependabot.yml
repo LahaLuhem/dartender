@@ -19,3 +19,10 @@ updates:
       interval: weekly
     commit-message:
       prefix: test
+
+  - package-ecosystem: docker
+    directory: /scripts/setup
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build

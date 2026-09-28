@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
-# Sets up the package repo it runs in: its dependabot.yml, then its settings on GitHub.
+# Sets up the package repo it runs in, from a container that brings every tool the setup needs.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
+root="$(cd "${here}/../.." && pwd)"
 
-usage() {
-  error "Usage: setup.sh [--check <local gate>]..."
-  exit 2
-}
-
-parse_checks "$@"
-repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
-info "Setting up ${repo}"
-"${here}/dependabot.sh"
-"${here}/apply.sh" "${repo}" "$@"
-success "${repo} is set up"
+info "Getting the setup image ready, which takes a while the first time"
+docker build --quiet --tag dartender-setup - < "${here}/Dockerfile" > /dev/null
+GH_TOKEN="$(gh auth token)"
+export GH_TOKEN
+# The scripts come in as a mount rather than in the image, so a cached image can't run stale ones.
+# GH_TOKEN goes by name only, which keeps the token out of ps.
+exec docker run --rm --env GH_TOKEN --volume "${PWD}:/repo" --workdir /repo \
+  --volume "${root}:/dartender:ro" dartender-setup /dartender/scripts/setup/inside.sh "$@"
