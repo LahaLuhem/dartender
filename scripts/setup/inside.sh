@@ -42,6 +42,18 @@ caller_value() {
   fi
 }
 
+# The scripts the repo's lint-checks.json has ShellCheck check now. A repo without one yet gets
+# scripts/*.sh when that finds any, since ShellCheck fails on a glob that finds nothing.
+shellcheck_paths() {
+  local manifest=.github/lint-checks.json
+  if [[ -f ${manifest} ]]; then
+    jq -r '.checks[] | select(.name == "ShellCheck") | .cmd | sub("^shellcheck\\s*"; "")' \
+      "${manifest}"
+  elif compgen -G 'scripts/*.sh' > /dev/null; then
+    echo 'scripts/*.sh'
+  fi
+}
+
 # The checks the repo's ruleset requires besides the shared ones, once it requires the shared ones.
 # Until then it's from before dartender, and names old gates that -y mustn't keep.
 ruleset_checks() {
@@ -68,8 +80,8 @@ fi
 [[ $# -eq 0 ]] || usage
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 info "Setting up ${repo}"
-# Before dependabot.yml, which then covers them.
-ask "Write the callers in .github/workflows?"
+# Before dependabot.sh, which then watches the callers and stops without a lint-checks.json.
+ask "Write the callers and lint-checks.json in .github?"
 if [[ ${answer} == true ]]; then
   coveralls="$(caller_value coveralls)"
   ask "Upload coverage to Coveralls?" "${coveralls}"
@@ -86,9 +98,12 @@ if [[ ${answer} == true ]]; then
   ask_for "Globs to leave out of coverage besides generated code, space-separated" \
     "${coverage_excludes}"
   coverage_excludes="${answer}"
-  "${here}/callers.sh" "${coveralls}" "${min_coverage}" "${coverage_excludes}"
+  shellcheck="$(shellcheck_paths)"
+  ask_for "Shell scripts for ShellCheck, space-separated globs, blank for none" "${shellcheck}"
+  shellcheck="${answer}"
+  "${here}/callers.sh" "${coveralls}" "${min_coverage}" "${coverage_excludes}" "${shellcheck}"
 else
-  info "Left the callers in .github/workflows as they are"
+  info "Left the callers and lint-checks.json in .github as they are"
 fi
 ask "Write .github/dependabot.yml?"
 if [[ ${answer} == true ]]; then

@@ -23,7 +23,7 @@ Describe 'setup/callers.sh'
   It "renders dartender's brick into the repo, for the repo's default branch"
     r="$(repo)"
     git -C "${r}" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master
-    When run script "${script}" true 95 '' "${r}"
+    When run script "${script}" true 95 '' '' "${r}"
     The status should be success
     The output should be present
     The contents of file "${CALLS}" should satisfy adds_the_brick
@@ -33,24 +33,48 @@ Describe 'setup/callers.sh'
 
   It 'hands mason the values it is given'
     r="$(repo)"
-    When run script "${script}" false 90 'lib/a.dart lib/b.dart' "${r}"
+    When run script "${script}" false 90 'lib/a.dart lib/b.dart' '' "${r}"
     The status should be success
     The output should be present
     The result of function make_call should end with \
       '--coveralls false --min_coverage 90 --coverage_excludes lib/a.dart lib/b.dart'
   End
 
+  It 'hands mason the shell scripts for ShellCheck'
+    r="$(repo)"
+    When run script "${script}" true 95 '' 'scripts/*.sh benchmark/*.sh' "${r}"
+    The status should be success
+    The output should be present
+    The result of function make_call should include \
+      '--shellcheck true --shellcheck_paths scripts/*.sh benchmark/*.sh '
+  End
+
+  Describe 'no shell scripts for ShellCheck'
+    Parameters
+      'nothing' ''
+      'only spaces' '  '
+    End
+
+    It "leaves ShellCheck out for $1"
+      r="$(repo)"
+      When run script "${script}" true 95 '' "$2" "${r}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--shellcheck false '
+    End
+  End
+
   It 'says so when the callers are already up to date'
     r="$(repo)"
     export MASON_RC=0
-    When run script "${script}" true 95 '' "${r}"
+    When run script "${script}" true 95 '' '' "${r}"
     The status should be success
     The output should include 'already'
   End
 
   It 'says it wrote the callers when mason changed them'
     r="$(repo)"
-    When run script "${script}" true 95 '' "${r}"
+    When run script "${script}" true 95 '' '' "${r}"
     The status should be success
     The output should be present
     The output should not include 'already'
@@ -59,7 +83,7 @@ Describe 'setup/callers.sh'
   It "fails with mason's own error when mason fails"
     r="$(repo)"
     export MASON_RC=1
-    When run script "${script}" true 95 '' "${r}"
+    When run script "${script}" true 95 '' '' "${r}"
     The status should be failure
     The error should include 'mason stand-in failed'
   End
@@ -67,14 +91,14 @@ Describe 'setup/callers.sh'
   It "renders nothing when it can't tell the default branch"
     r="$(repo)"
     git -C "${r}" symbolic-ref --delete refs/remotes/origin/HEAD
-    When run script "${script}" true 95 '' "${r}"
+    When run script "${script}" true 95 '' '' "${r}"
     The status should be failure
     The error should be present
     The result of function make_call should be blank
   End
 
-  It 'refuses a command line without the three values, before anything else'
-    When run script "${script}" true 95
+  It 'refuses a command line without the four values, before anything else'
+    When run script "${script}" true 95 ''
     The status should be failure
     The error should be present
     The contents of file "${CALLS}" should equal ''

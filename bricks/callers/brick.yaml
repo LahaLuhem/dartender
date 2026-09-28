@@ -1,5 +1,5 @@
 name: callers
-description: A package repo's caller workflows, which run dartender's own.
+description: A package repo's caller workflows, which run dartender's own, and its lint-checks.json.
 version: 0.1.0
 
 environment:
@@ -19,3 +19,10 @@ vars:
   coverage_excludes:
     type: string
     description: The coverage-excludes input of dartender's ci.yml.
+  # Its tags in lint-checks.json sit inline, since mason leaves a blank line for a tag on its own.
+  shellcheck:
+    type: boolean
+    description: Whether lint-checks.json gets a ShellCheck check.
+  shellcheck_paths:
+    type: string
+    description: The shell scripts that check runs on, as space-separated globs.

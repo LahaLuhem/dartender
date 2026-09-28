@@ -1,31 +1,37 @@
 #!/usr/bin/env bash
-# Writes a package repo's caller workflows from dartender's brick, for its admin to commit.
+# Writes a package repo's caller workflows and lint-checks.json from dartender's brick, for its admin
+# to commit.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
 
 usage() {
-  error "Usage: callers.sh <coveralls> <min-coverage> <coverage-excludes> [folder]"
+  error "Usage: callers.sh <coveralls> <min-coverage> <coverage-excludes> <shellcheck-paths>" \
+    "[folder]"
   exit 2
 }
 
-[[ $# -ge 3 && $# -le 4 ]] || usage
-coveralls="$1" min_coverage="$2" coverage_excludes="$3" repo="${4:-.}"
+[[ $# -ge 4 && $# -le 5 ]] || usage
+coveralls="$1" min_coverage="$2" coverage_excludes="$3" shellcheck_paths="$4" repo="${5:-.}"
 branch="$(git -C "${repo}" symbolic-ref --short refs/remotes/origin/HEAD)"
 branch="${branch#origin/}"
+# mason renders a section even for an empty string, so the brick switches ShellCheck on this.
+shellcheck=false
+if [[ ${shellcheck_paths} == *[![:space:]]* ]]; then shellcheck=true; fi
 
 # Global, so mason leaves no mason.yaml in the repo.
 mason add -g callers --path "${here}/../../bricks/callers" > /dev/null
 rc=0
 out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-exit-if-changed \
+  --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
   --coverage_excludes "${coverage_excludes}" 2>&1)" || rc=$?
 case "${rc}" in
-  0) success "The callers in ${repo}/.github/workflows are already up to date" ;;
+  0) success "The callers and lint-checks.json in ${repo}/.github are already up to date" ;;
   # What --set-exit-if-changed exits with when it changed a file.
-  70) success "Wrote the callers in ${repo}/.github/workflows" ;;
+  70) success "Wrote the callers and lint-checks.json in ${repo}/.github" ;;
   *)
-    error "mason couldn't write the callers: ${out}"
+    error "mason couldn't write the callers and lint-checks.json: ${out}"
     exit "${rc}"
     ;;
 esac
