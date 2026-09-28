@@ -1,5 +1,5 @@
-Style for the shell in `scripts/` and `test/`, the CI YAML, and the prose. The checks enforce most
-of it, so this is mostly the part they can't see.
+Style for the shell in `scripts/` and `test/`, the CI YAML, the brick templates, and the prose. The
+checks enforce most of it, so this is mostly the part they can't see.
 
 ## Shell
 
@@ -38,6 +38,21 @@ a real package repo.
 - **One command per step, no `run: |` blocks,** so a run reads step by step in the log.
 - **Write out every input we rely on, defaults included,** so a new major that changes a default
   can't quietly change what runs. The input check catches one that got renamed.
+
+## Brick templates
+
+The callers in [`bricks/callers/`](bricks/callers/), which [mason](https://github.com/felangel/mason)
+fills in.
+
+- **`{{{ }}}` for strings.** `{{ }}` escapes them for HTML, so `lib/a` would come out as
+  `lib&#x2F;a`.
+- **A template that needs `${{ }}` switches its tags.** mason takes `${{ github.ref }}` for one of
+  its own and leaves only `$`. So `{{=<% %>=}}` goes at the end of the header line, where it leaves
+  no trace, and strings become `<%&name%>`, like in the changelog caller.
+- **An optional block gets a boolean of its own, with its tags inline.** A section renders for any
+  string, the empty one too, and a line holding only a tag comes out blank instead of going away.
+- **`callers.sh` passes every variable.** mason asks for a missing one, which fails without a
+  terminal, and it doesn't check a value against its type.
 
 ## Comments
 
