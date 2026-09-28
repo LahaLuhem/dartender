@@ -10,14 +10,18 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 ## How it fits together
 
 The jobs live here, and every package repo runs them from `main`. A package repo keeps only a few
-small files of its own, plus some settings on GitHub that the jobs count on.
+small files of its own, plus some settings on GitHub that the jobs count on, and
+[`setup.sh`](#setting-up-a-repo) makes all of them.
 
-| In a package repo | What it's for | Where it comes from |
-|---|---|---|
-| 3 caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml` and `publish.yml` from here | Written by hand, see [Calling it](#calling-it) |
-| `.github/lint-checks.json` | Which linters run | Written by hand, see [Lints](#lints) |
-| `.github/dependabot.yml` | What Dependabot keeps up to date | `setup.sh`, see [Setting up a repo](#setting-up-a-repo) |
-| A ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR | `setup.sh` as well |
+| In a package repo | What it's for |
+|---|---|
+| 3 caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml` and `publish.yml` from here, see [Calling it](#calling-it) |
+| `.github/lint-checks.json` | Which linters run, see [Lints](#lints) |
+| `.github/dependabot.yml` | What Dependabot keeps up to date |
+| The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
+
+Anything only one repo needs, like a benchmark, lives in a workflow of that repo's own, next to the
+callers.
 
 ## Setting up a repo
 
@@ -29,11 +33,10 @@ onto dartender, and again whenever something it sets needs to change.
 - **bash 5.** macOS still ships 3.2, so `brew install bash`.
 - **Docker, running.** Every other tool the setup uses comes in an image that `setup.sh` builds.
 - **gh, logged in as the repo's admin.** The setup changes the repo's settings with that login.
-- **A clone of the repo with a `.github/lint-checks.json`.** The setup stops without one.
 
 ### Running it
 
-From the root of the clone:
+From the root of a clone of the repo:
 
 ```bash
 tmp=$(mktemp -d) \
@@ -45,41 +48,58 @@ tmp=$(mktemp -d) \
 That downloads dartender's `main` into a fresh temp folder and runs `setup.sh` from there, so every
 run gets the latest. The first run takes longer, while Docker builds the image.
 
-Then look over the `.github/dependabot.yml` it wrote, and commit it.
+It asks before each part, and for the few settings the callers take, which start from what the repo
+has now. Enter takes the starting answer:
+
+| It asks | Starting from |
+|---|---|
+| Write the callers and `lint-checks.json`? | Yes |
+| Upload coverage to Coveralls? | What the `ci` caller passes now, or else `ci.yml`'s default |
+| The lowest line coverage that passes | The same |
+| Globs to leave out of coverage, besides generated code | The same |
+| The shell scripts for ShellCheck | What ShellCheck checks now, or else `scripts/*.sh` when there's no `lint-checks.json` yet and that finds any |
+| Write `dependabot.yml`? | Yes |
+| Set the ruleset, labels and merge settings on GitHub? | Yes |
+
+The four in the middle only come up after a yes to the callers. A no leaves that part as it is, and
+ctrl+c stops the setup. Put `-y` after `setup.sh` to go with every starting answer without being
+asked, which is also the only way to run it without a terminal.
+
+Then look over what it wrote in `.github/`, and commit it.
 
 ### What it sets
 
 | What | Where | Taken from |
 |---|---|---|
-| `.github/dependabot.yml`, a weekly block for each folder Dependabot has to watch | The clone, for you to commit | The repo's files, new ones included |
-| The `Protected` ruleset, which requires `ci / ok` and `conventions / ok` | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
+| The `ci`, `conventions` and `publish` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), and your answers |
+| `lint-checks.json` | `.github/`, for you to commit | The same |
+| `dependabot.yml`, a weekly block for each folder Dependabot has to watch | `.github/`, for you to commit | The repo's files, new ones included |
+| The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
 | The seven `sem-*` labels, one per changelog section | GitHub | [`sem-labels.json`](scripts/sem-labels.json) |
 | Merge settings, like rebase merges only and auto-merge | GitHub | [`apply.sh`](scripts/setup/apply.sh) |
 
-Whatever is already set stays as it is, and it says so, so running it again is safe. It writes
-`dependabot.yml` whole each time, so edits made by hand don't survive the next run.
+Whatever is already set stays as it is, and it says so, so running it again is safe. The files come
+out whole on every run, though, so edits made by hand don't survive the next one. Each says so at
+the top.
 
 ### The repo's own checks
 
-If the repo has checks of its own that should block a merge, like a benchmark, name each one with
-`--check` at the end of that last line, so the ruleset requires it next to `ci / ok` and
-`conventions / ok`:
+A check only one repo runs, like a benchmark, goes in a ruleset of the repo's own, made under
+**Settings → Rules → Rulesets**. GitHub requires the checks of every ruleset on a branch, so both
+have to pass.
 
-```bash
-  && bash "$tmp/scripts/setup/setup.sh" --check benchmark-ok --check 'Browser tests (dart2js + dart2wasm)'
-```
-
-A check goes by its job's `name:`, or the job's id when it has none. Quote a name with spaces.
-
-Pass the same `--check`s every time. The ruleset ends up with exactly the checks a run names, so a
-run without them takes them out again.
+- **Give it a name of its own.** The setup takes over the ruleset called `dartender`, or
+  `Protected` from before dartender.
+- **Point it at the default branch, and add the check** by its job's `name:`, or the job's id when
+  it has none.
+- **Add the repo's admins to its bypass list**, since each ruleset has its own.
 
 ### When to run it again
 
 - **The repo gets something new for Dependabot to watch**, like an example app. CI's Dependabot
   config job fails and names it.
-- **dartender changes what it sets**, like a new label.
-- **The repo's own checks change.**
+- **dartender changes what it writes or sets**, like a new label.
+- **An answer changes**, like the lowest coverage.
 
 <details>
 <summary>What happens under the hood</summary>
@@ -87,20 +107,25 @@ run without them takes them out again.
 `setup.sh` builds the `dartender-setup` image from [`scripts/setup/Dockerfile`](scripts/setup/Dockerfile)
 and runs [`inside.sh`](scripts/setup/inside.sh) in it. The clone comes in as the working folder,
 dartender's scripts come in read-only, so a cached image never runs old ones, and your gh token
-comes in as `GH_TOKEN`. `inside.sh` writes the `dependabot.yml` with
-[`dependabot.sh`](scripts/setup/dependabot.sh), then sets up GitHub with
-[`apply.sh`](scripts/setup/apply.sh).
+comes in as `GH_TOKEN`.
 
-If GitHub won't take the ruleset, say with a token that can't manage rulesets, it stops and says
-how to import it by hand.
+`inside.sh` asks its questions with [gum](https://github.com/charmbracelet/gum), then has
+[`callers.sh`](scripts/setup/callers.sh) fill in the templates with
+[mason](https://github.com/felangel/mason). Those files come first, so the `dependabot.yml` that
+[`dependabot.sh`](scripts/setup/dependabot.sh) writes next already watches them. Last,
+[`apply.sh`](scripts/setup/apply.sh) sets up GitHub.
+
+A ruleset still called `Protected` gets renamed to `dartender` in the same update. If GitHub won't
+take the ruleset, say with a token that can't manage rulesets, it stops and says how to import it
+by hand.
 
 </details>
 
 ## Calling it
 
-A package repo calls each workflow from a caller file of its own, with one job pinned to `@main`,
-like `uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks, `ci / ok` and
-`conventions / ok`, take their names from the `ci` and `conventions` jobs, so keep those names.
+A package repo calls each workflow from a caller that `setup.sh` writes, with one job pinned to
+`@main`, like `uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks,
+`ci / ok` and `conventions / ok`, take their names from the `ci` and `conventions` jobs.
 
 | Job | Calls | Grants | For |
 |---|---|---|---|
@@ -108,20 +133,21 @@ like `uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required che
 | `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
 | `publish` | `publish.yml` | `contents: read`, `id-token: write` | The OIDC token pub.dev takes instead of a login |
 
-`ci.yml`'s inputs, like the minimum coverage, are at the top of the file with their defaults.
-
-The `publish` caller runs on pushed tags that match the package's pattern on pub.dev, like
-`'[0-9]+.[0-9]+.[0-9]+'` for `{{version}}`.
-
 If a caller grants less than a job asks for, the run won't start, even when that job would skip.
 
-Run `setup.sh` before adding the `ci` caller. Until the ruleset requires `ci / ok`, `gh` merges
-Dependabot's PRs on the spot instead of waiting for CI.
+The `publish` caller runs on tags like `1.2.3`, so set the package's tag pattern on pub.dev to
+`{{version}}`.
+
+The ruleset has to be in place before the `ci` caller lands. Until it requires `ci / ok`, `gh`
+merges Dependabot's PRs on the spot instead of waiting for CI. A run that says yes to GitHub takes
+care of that.
 
 ## Lints
 
-A repo lists its linters in `.github/lint-checks.json`, and this repo's own is a working example.
-Repos without their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actions/lint/defaults/`.
+`lint-checks.json` lists the linters CI runs, each from the
+[linterpol](https://github.com/LahaLuhem/linterpol) image, and `setup.sh` writes it. Repos without
+their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actions/lint/defaults/`. A linter only
+one repo needs goes in a workflow of that repo's own, since the setup's next run rewrites the file.
 
 ## What's inside
 
@@ -139,6 +165,7 @@ Repos without their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actio
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
 | `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
+| `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
 | `scripts/` | The shell the actions run, and the seven `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
