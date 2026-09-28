@@ -90,8 +90,9 @@ Describe 'setup/inside.sh'
   End
 
   It "leaves GitHub alone when it can't write the dependabot.yml"
-    # No lint manifest, which detect.sh stops on.
+    # No lint manifest, which detect.sh stops on, and no callers to bring one.
     r="$(repo)"
+    export DECLINE_ON='callers'
     cd "${r}" || return
     When run script "${script}"
     The status should be failure
@@ -264,6 +265,70 @@ Describe 'setup/inside.sh'
       The contents of file "${CALLS}" should not include 'gum '
       The result of function make_call should end with \
         '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+    End
+  End
+
+  Describe 'the shell scripts for ShellCheck'
+    # A lint manifest whose ShellCheck check runs on $1.
+    checking() {
+      printf '{"image":"img","checks":[{"name":"ShellCheck","cmd":"shellcheck %s"}]}' "$1"
+    }
+
+    It "starts from the ones the repo's lint-checks.json has now"
+      lint="$(checking 'scripts/*.sh bench/*.sh')"
+      r="$(repo "${lint}")"
+      track "${r}" pubspec.yaml
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--shellcheck_paths scripts/*.sh bench/*.sh '
+    End
+
+    It 'starts from scripts/*.sh for a repo without a lint-checks.json but with scripts there'
+      r="$(repo)"
+      track "${r}" pubspec.yaml
+      track "${r}" scripts/release.sh
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include \
+        '--shellcheck true --shellcheck_paths scripts/*.sh '
+    End
+
+    It 'starts from none for a lint-checks.json without ShellCheck, even with scripts there'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      track "${r}" scripts/release.sh
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--shellcheck false '
+    End
+
+    It 'starts from none without a lint-checks.json or scripts/*.sh'
+      r="$(repo)"
+      track "${r}" pubspec.yaml
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--shellcheck false '
+    End
+
+    It 'takes what gets typed over what the repo has now'
+      lint="$(checking 'scripts/*.sh')"
+      r="$(repo "${lint}")"
+      track "${r}" pubspec.yaml
+      export TYPE_ON='ShellCheck' TYPED='tool/*.sh'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include \
+        '--shellcheck true --shellcheck_paths tool/*.sh '
     End
   End
 

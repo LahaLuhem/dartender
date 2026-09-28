@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stands in for mason in the specs, set up by fresh_gh in test/utils/gh.sh. Logs each call, and make
-# exits ${MASON_RC}, writing an empty ci caller into its --output-dir when that's 70 for a change.
+# exits ${MASON_RC}, writing an empty ci caller and a one-check lint-checks.json into its --output-dir
+# when that's 70 for a change.
 # shellcheck disable=SC2154  # fresh_gh exports what this reads
 echo "mason $*" >> "${CALLS}"
 if [[ $1 != make ]]; then exit 0; fi
@@ -14,6 +15,7 @@ case "${MASON_RC}" in
   70)
     mkdir -p "${out}/.github/workflows"
     : > "${out}/.github/workflows/ci.yml"
+    echo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}' > "${out}/.github/lint-checks.json"
     ;;
   *) echo "mason stand-in failed" >&2 ;;
 esac
