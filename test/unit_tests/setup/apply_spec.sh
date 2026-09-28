@@ -6,6 +6,8 @@ Describe 'setup/apply.sh'
   apply="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/apply.sh"
   example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json"
   labels="${SHELLSPEC_PROJECT_ROOT}/scripts/sem-labels.json"
+  # The example ruleset, the way GitHub lists a repo's rulesets.
+  ours="$(jq -c '[{id: 42, name: .name}]' "${example}")"
 
   BeforeEach 'fresh_gh'
 
@@ -50,12 +52,22 @@ Describe 'setup/apply.sh'
   End
 
   It 'updates the ruleset in place when the one by that name differs'
-    export RULESETS='[{"id": 42, "name": "Protected"}]'
+    export RULESETS="${ours}"
     When run script "${apply}" owner/repo
     The status should be success
     The output should be present
     The contents of file "${CALLS}" should include 'api PUT repos/owner/repo/rulesets/42'
     The contents of file "${CALLS}" should not include 'api POST'
+  End
+
+  It 'renames a ruleset still called Protected, in the same call that updates it'
+    export RULESETS='[{"id": 42, "name": "Protected"}]'
+    When run script "${apply}" owner/repo
+    The status should be success
+    The output should include 'Protected'
+    The contents of file "${CALLS}" should include 'api PUT repos/owner/repo/rulesets/42'
+    The contents of file "${CALLS}" should not include 'api POST'
+    The contents of file "${BODY}" should satisfy same_json_as "${example}"
   End
 
   It 'leaves a ruleset with another name alone'
@@ -105,14 +117,15 @@ Describe 'setup/apply.sh'
 
   Describe "when the API won't take the ruleset"
     Parameters
-      'api GET repos/owner/repo/rulesets' '[]'
-      'api GET repos/owner/repo/rulesets/42' '[{"id": 42, "name": "Protected"}]'
-      'api POST' '[]'
-      'api PUT' '[{"id": 42, "name": "Protected"}]'
+      'api GET repos/owner/repo/rulesets' none
+      'api GET repos/owner/repo/rulesets/42' ours
+      'api POST' none
+      'api PUT' ours
     End
 
     It "says how to set it by hand and stops, when '$1' fails"
-      export FAIL_ON="$1" RULESETS="$2"
+      export FAIL_ON="$1"
+      if [[ $2 == ours ]]; then export RULESETS="${ours}"; fi
       When run script "${apply}" owner/repo
       The status should be failure
       The error should include "${example}"

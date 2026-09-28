@@ -1,5 +1,5 @@
 {
-  "name": "Protected",
+  "name": "dartender",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
