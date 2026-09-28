@@ -22,12 +22,11 @@ ask() {
   if [[ ${rc} -eq 1 ]]; then answer=false; fi
 }
 
-# Sets answer to what gets typed for $1, starting from $2, which -y takes as it is. $3 is write for
-# more than one line.
+# Sets answer to what gets typed for $1, starting from $2, which -y takes as it is.
 ask_for() {
   answer="$2"
   if [[ ${yes} == true ]]; then return; fi
-  answer="$(gum "${3:-input}" --header "$1" --value "$2")"
+  answer="$(gum input --header "$1" --value "$2")"
 }
 
 # What the repo's ci caller passes for the input $1 now, or else ci.yml's own default for it.
@@ -52,24 +51,6 @@ shellcheck_paths() {
   elif compgen -G 'scripts/*.sh' > /dev/null; then
     echo 'scripts/*.sh'
   fi
-}
-
-# The checks the repo's ruleset requires besides the shared ones, once it requires the shared ones.
-# Until then it's from before dartender, and names old gates that -y mustn't keep.
-ruleset_checks() {
-  local example="${here}/protected.example.json" name rulesets id ruleset
-  name="$(jq -r .name "${example}")"
-  # apply.sh says what to do when GitHub won't show the rulesets.
-  rulesets="$(gh api --paginate "repos/${repo}/rulesets")" || return 0
-  id="$(jq -r --arg name "${name}" '.[] | select(.name == $name) | .id' <<< "${rulesets}")"
-  if [[ -z ${id} ]]; then return 0; fi
-  ruleset="$(gh api "repos/${repo}/rulesets/${id}")"
-  jq -r --slurpfile example "${example}" '
-    def checks: [.rules[] | select(.type == "required_status_checks")
-      | .parameters.required_status_checks[].context];
-    ($example[0] | checks) as $shared | checks as $have
-    | if ($shared - $have | length) == 0 then ($have - $shared)[] else empty end
-  ' <<< "${ruleset}"
 }
 
 yes=false
@@ -113,14 +94,7 @@ else
 fi
 ask "Set the ruleset, sem-* labels and merge settings on GitHub?"
 if [[ ${answer} == true ]]; then
-  current="$(ruleset_checks)"
-  ask_for "The repo's own checks to require, one per line" "${current}" write
-  checks=()
-  mapfile -t lines <<< "${answer}"
-  for line in "${lines[@]}"; do
-    if [[ ${line} == *[![:space:]]* ]]; then checks+=(--check "${line}"); fi
-  done
-  "${here}/apply.sh" "${repo}" "${checks[@]}"
+  "${here}/apply.sh" "${repo}"
 else
   info "Left the settings on GitHub as they are"
 fi

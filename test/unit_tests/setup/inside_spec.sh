@@ -53,12 +53,6 @@ Describe 'setup/inside.sh'
     export RULESET RULESETS='[{"id": 42, "name": "Protected"}]'
   }
 
-  # How many of the checks sent for the ruleset have a blank name.
-  blank_checks() {
-    jq '[.rules[] | select(.type == "required_status_checks")
-      | .parameters.required_status_checks[].context | select(test("^\\s*$"))] | length' "${BODY}"
-  }
-
   It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"
     r="$(repo "${manifest}")"
     track "${r}" pubspec.yaml
@@ -87,6 +81,20 @@ Describe 'setup/inside.sh'
     The output should include 'already'
     The result of function mtime should equal "${stamp}"
     The result of function writes should be blank
+  End
+
+  It 'keeps the shared ruleset to the shared checks, even under -y'
+    r="$(repo "${manifest}")"
+    track "${r}" pubspec.yaml
+    already_set_up
+    # A check of the repo's own, which belongs in a ruleset of the repo's own.
+    ruleset_with 'ci / ok' 'conventions / ok' bench-ok
+    cd "${r}" || return
+    When run script "${script}" -y
+    The status should be success
+    The output should be present
+    The contents of file "${CALLS}" should include 'api PUT repos/owner/repo/rulesets/42'
+    The result of function sent_checks should not include 'bench-ok'
   End
 
   It "leaves GitHub alone when it can't write the dependabot.yml"
@@ -329,70 +337,6 @@ Describe 'setup/inside.sh'
       The output should be present
       The result of function make_call should include \
         '--shellcheck true --shellcheck_paths tool/*.sh '
-    End
-  End
-
-  Describe "the repo's own checks"
-    It 'starts from the ones its ruleset requires besides the shared ones, and keeps them'
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      already_set_up
-      ruleset_with 'ci / ok' 'conventions / ok' bench-ok
-      cd "${r}" || return
-      When run script "${script}"
-      The status should be success
-      The output should be present
-      The result of function asked should include '--value bench-ok'
-      The contents of file "${CALLS}" should not include 'api PUT'
-    End
-
-    It "starts from none on a ruleset that doesn't require the shared checks yet"
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      # Like a repo's ruleset from before dartender.
-      ruleset_with repo-ok package-ok
-      cd "${r}" || return
-      When run script "${script}"
-      The status should be success
-      The output should be present
-      The result of function sent_checks should not include 'repo-ok'
-    End
-
-    It 'requires each check typed, one per line'
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      export TYPE_ON='own checks' TYPED=$'bench-ok\nBrowser tests (dart2js + dart2wasm)'
-      cd "${r}" || return
-      When run script "${script}"
-      The status should be success
-      The output should be present
-      The result of function sent_checks should include 'bench-ok'
-      The result of function sent_checks should include 'Browser tests (dart2js + dart2wasm)'
-    End
-
-    It 'leaves blank lines out'
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      export TYPE_ON='own checks' TYPED=$'bench-ok\n\n  \n'
-      cd "${r}" || return
-      When run script "${script}"
-      The status should be success
-      The output should be present
-      The result of function sent_checks should include 'bench-ok'
-      The result of function blank_checks should equal 0
-    End
-
-    It 'asks nothing under -y, keeping the ones the ruleset requires'
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      already_set_up
-      ruleset_with 'ci / ok' 'conventions / ok' bench-ok
-      cd "${r}" || return
-      When run script "${script}" -y
-      The status should be success
-      The output should be present
-      The contents of file "${CALLS}" should not include 'gum '
-      The contents of file "${CALLS}" should not include 'api PUT'
     End
   End
 

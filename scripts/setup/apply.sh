@@ -6,35 +6,24 @@ here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
 
 usage() {
-  error "Usage: apply.sh <owner/repo> [--check <local gate>]..."
+  error "Usage: apply.sh <owner/repo>"
   exit 2
 }
 
-[[ $# -gt 0 && $1 != -* ]] || usage
+[[ $# -eq 1 && $1 != -* ]] || usage
 repo="$1"
-shift
-checks=()
-while [[ $# -gt 0 ]]; do
-  [[ $1 == --check && $# -gt 1 ]] || usage
-  checks+=("$2")
-  shift 2
-done
 
 # Compares only $want's fields, since GitHub adds its own, like ids and links.
 # shellcheck disable=SC2016  # a jq program, whose $want and $got are jq variables
 same='. as $got | $want == ($want | with_entries(.value = $got[.key]))'
 
-# Local gates run on GitHub Actions like the shared ones, so they take the same integration id.
-body="$(jq '
-  (.rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks) |=
-    . + [$ARGS.positional[] as $gate | {context: $gate, integration_id: .[0].integration_id}]
-' "${here}/protected.example.json" --args "${checks[@]}")"
-name="$(jq -r .name "${here}/protected.example.json")"
+body="$(< "${here}/protected.example.json")"
+name="$(jq -r .name <<< "${body}")"
 
 # For when the API won't take the ruleset, like with a token that can't manage rulesets.
 by_hand() {
   error "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
-    "add the repo's own checks as required checks, then make sure it kept the admin bypass."
+    "then make sure it kept the admin bypass."
   exit 1
 }
 
