@@ -1,0 +1,21 @@
+name: callers
+description: A package repo's caller workflows, which run dartender's own.
+version: 0.1.0
+
+environment:
+  mason: ^0.1.0
+
+# scripts/setup/callers.sh passes every one of these.
+vars:
+  default_branch:
+    type: string
+    description: The branch the callers check pull requests into and pushes to.
+  coveralls:
+    type: boolean
+    description: The coveralls input of dartender's ci.yml.
+  min_coverage:
+    type: number
+    description: The min-coverage input of dartender's ci.yml.
+  coverage_excludes:
+    type: string
+    description: The coverage-excludes input of dartender's ci.yml.

@@ -1,10 +1,12 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
 
-# A throwaway git repo whose lint manifest holds $1. No argument, no manifest.
+# A throwaway git repo whose lint manifest holds $1, with origin's HEAD on main like a clone's. No
+# argument, no manifest.
 repo() {
   dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
   git init -q "${dir}"
+  git -C "${dir}" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
   mkdir "${dir}/.github"
   if [[ $# -gt 0 ]]; then printf '%s' "$1" > "${dir}/.github/lint-checks.json"; fi
   echo "${dir}"
