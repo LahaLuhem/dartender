@@ -1,0 +1,94 @@
+name: Changelog
+
+on:
+  workflow_call:
+    inputs:
+      app-id:
+        description: The changelog App's ID, which every package repo keeps as its APP_ID variable.
+        type: string
+        default: ""
+      working-directory:
+        description: Folder of the package. Only dartender's self-tests change it.
+        type: string
+        default: .
+      dry-run:
+        description: Shows the line without committing it. Only dartender's self-tests set it.
+        type: boolean
+        default: false
+      label:
+        description: >-
+          A sem-* label to take instead of looking the PR up, since dartender's own PRs carry none.
+          Only dartender's self-tests set it.
+        type: string
+        default: ""
+      title:
+        description: The title that goes with that label. Only dartender's self-tests set it.
+        type: string
+        default: ""
+    secrets:
+      app-private-key:
+        description: The changelog App's private key, every package repo's APP_PRIVATE_KEY secret.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    name: Find the PR
+    runs-on: ubuntu-latest
+    # Reading the merged PR and its labels.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      type: ${{ steps.type.outputs.type }}
+      title: ${{ steps.type.outputs.title }}
+    steps:
+      - id: type
+        uses: $/actions/changelog-type
+        with:
+          repo: ${{ github.repository }}
+          sha: ${{ github.sha }}
+          label: ${{ inputs.label }}
+          title: ${{ inputs.title }}
+
+  write:
+    name: Write the line
+    needs: find
+    if: needs.find.outputs.type != ''
+    runs-on: ubuntu-latest
+    # Runs wait in line, so each one's checkout holds the line the one before it wrote.
+    concurrency:
+      group: changelog-${{ github.ref }}
+      queue: max
+    steps:
+      # The branch's tip rather than the pushed commit, for the same reason.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      # Only for its Dart, which cider runs on.
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          pub-get: false
+      - run: dart pub global activate cider
+      # client-id takes the App's ID too, and app-id is deprecated.
+      - if: ${{ !inputs.dry-run }}
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.app-id }}
+          private-key: ${{ secrets.app-private-key }}
+          # Only what the commit needs.
+          permission-contents: write
+      - uses: $/actions/changelog
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          repo: ${{ github.repository }}
+          branch: ${{ github.ref_name }}
+          type: ${{ needs.find.outputs.type }}
+          title: ${{ needs.find.outputs.title }}
+          token: ${{ steps.token.outputs.token }}
+          dry-run: ${{ inputs.dry-run }}

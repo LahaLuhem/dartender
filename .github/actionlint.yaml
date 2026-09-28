@@ -5,3 +5,6 @@ paths:
       - 'specifying action "\$/[^"]+" in invalid format'
       # And the concurrency `queue` key (May 2026), which the conventions gate uses.
       - 'unexpected key "queue" for "concurrency" section'
+      # And create-github-app-token's `client-id` (April 2026), which check-inputs.sh covers.
+      - 'missing input "app-id" which is required by action "actions/create-github-app-token@v3"'
+      - 'input "client-id" is not defined in action "actions/create-github-app-token@v3"'
