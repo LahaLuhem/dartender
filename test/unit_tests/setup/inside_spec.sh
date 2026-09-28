@@ -3,7 +3,7 @@
 Include test/utils/repo.sh
 Include test/utils/gh.sh
 
-# The two scripts it runs have specs of their own, so this covers what chaining them can break.
+# The scripts it runs have specs of their own, so this covers what chaining them can break.
 Describe 'setup/inside.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/inside.sh"
   manifest='{"image":"img","checks":[{"name":"a","cmd":"a"}]}'
@@ -19,8 +19,27 @@ Describe 'setup/inside.sh'
     stat -c %Y "${r}/.github/dependabot.yml"
   }
 
+  # The calls that change something on GitHub.
   writes() {
-    grep -vE '^(api GET |repo view |gum )' "${CALLS}" || :
+    grep -vE '^(api GET |repo view |gum |mason )' "${CALLS}" || :
+  }
+
+  make_call() {
+    grep '^mason make ' "${CALLS}" || :
+  }
+
+  asked() {
+    grep '^gum ' "${CALLS}" || :
+  }
+
+  blocks() {
+    yq '[.updates[] | ."package-ecosystem" + " " + .directory] | .[]' \
+      "${r}/.github/dependabot.yml"
+  }
+
+  default_of() {
+    INPUT="$1" yq '.on.workflow_call.inputs[strenv(INPUT)].default' \
+      "${SHELLSPEC_PROJECT_ROOT}/.github/workflows/ci.yml"
   }
 
   It "writes the dependabot.yml of the repo it runs in, then sets up that repo's GitHub side"
@@ -48,6 +67,8 @@ Describe 'setup/inside.sh'
   It 'changes nothing on a repo that is already set up, and says so'
     r="$(repo "${manifest}")"
     track "${r}" pubspec.yaml
+    track "${r}" .github/workflows/ci.yml
+    export MASON_RC=0
     "${SHELLSPEC_PROJECT_ROOT}/scripts/setup/dependabot.sh" "${r}" > /dev/null
     # Backdated, so a rewrite would show even within the same second.
     touch -t 200001010000 "${r}/.github/dependabot.yml"
@@ -79,8 +100,62 @@ Describe 'setup/inside.sh'
     cd "${r}" || return
     When run script "${script}"
     The status should be failure
+    The result of function make_call should be blank
     The file "${r}/.github/dependabot.yml" should not be exist
     The contents of file "${CALLS}" should not include 'api '
+  End
+
+  Describe 'the callers'
+    It "writes them first, with what the repo's ci caller passes now"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
+        '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
+      track "${r}" .github/workflows/ci.yml "${caller}"
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The line 1 of result of function asked should include 'callers'
+      The result of function make_call should end with \
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+    End
+
+    It "falls back to ci.yml's own defaults for a repo without a ci caller"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      coveralls="$(default_of coveralls)"
+      min_coverage="$(default_of min-coverage)"
+      excludes="$(default_of coverage-excludes)"
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should end with \
+        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes}"
+    End
+
+    It "has the same run's dependabot.yml watch the callers it wrote"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function blocks should include 'github-actions /'
+    End
+
+    It 'leaves them alone when told no'
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      export DECLINE_ON='callers'
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function make_call should be blank
+      The file "${r}/.github/dependabot.yml" should be exist
+    End
   End
 
   Describe 'asking before each part'
@@ -128,6 +203,7 @@ Describe 'setup/inside.sh'
       The status should be success
       The output should be present
       The contents of file "${CALLS}" should not include 'gum '
+      The result of function make_call should be present
       The file "${r}/.github/dependabot.yml" should be exist
       The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
     End
