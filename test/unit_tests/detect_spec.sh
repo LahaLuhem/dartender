@@ -91,11 +91,31 @@ Describe 'detect.sh'
       The output should satisfy watches 'github-actions /' 'pub /'
     End
 
-    It "leaves out files git doesn't track, like the plugin links in a clone's example"
+    It 'watches a new file before it is committed, like a caller setup.sh just wrote'
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
       track "${r}" pubspec.yaml
+      mkdir -p "${r}/.github/workflows"
+      : > "${r}/.github/workflows/ci.yml"
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'github-actions /' 'pub /'
+    End
+
+    It "leaves out files git ignores, like the plugin links in a clone's example"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml
+      track "${r}" example/ios/.gitignore '**/.symlinks/'
       mkdir -p "${r}/example/ios/.symlinks/plugins/a"
       : > "${r}/example/ios/.symlinks/plugins/a/pubspec.yaml"
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /'
+    End
+
+    It "leaves out a file that's deleted but not committed yet"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml
+      track "${r}" example/pubspec.yaml
+      track "${r}" .github/actions/a/action.yml $'runs:\n  using: composite\n  steps: []\n'
+      rm "${r}/example/pubspec.yaml" "${r}/.github/actions/a/action.yml"
       When run script scripts/detect.sh "${r}"
       The output should satisfy watches 'pub /'
     End
