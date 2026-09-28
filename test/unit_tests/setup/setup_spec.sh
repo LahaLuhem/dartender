@@ -16,7 +16,7 @@ Describe 'setup/setup.sh'
   It 'builds its image, then runs the setup in it on the repo it was started in'
     r="$(repo)"
     cd "${r}" || return
-    When run script "${script}"
+    When run script "${script}" -y
     The status should be success
     The output should be present
     The line 1 of contents of file "${CALLS}" should start with 'docker build '
@@ -28,7 +28,7 @@ Describe 'setup/setup.sh'
   It "hands the container the admin's GitHub token, keeping it off docker's command line"
     r="$(repo)"
     cd "${r}" || return
-    When run script "${script}"
+    When run script "${script}" -y
     The status should be success
     The output should be present
     The result of function run_call should include '--env GH_TOKEN '
@@ -39,17 +39,17 @@ Describe 'setup/setup.sh'
   It 'hands its arguments on to the setup'
     r="$(repo)"
     cd "${r}" || return
-    When run script "${script}" --check bench-ok
+    When run script "${script}" -y --check bench-ok
     The status should be success
     The output should be present
-    The result of function run_call should end with 'inside.sh --check bench-ok'
+    The result of function run_call should end with 'inside.sh -y --check bench-ok'
   End
 
   It 'fails when the setup inside the container fails'
     r="$(repo)"
     export FAIL_ON='docker run'
     cd "${r}" || return
-    When run script "${script}"
+    When run script "${script}" -y
     The status should be failure
     The output should be present
   End
@@ -64,10 +64,39 @@ Describe 'setup/setup.sh'
       r="$(repo)"
       export FAIL_ON="$2"
       cd "${r}" || return
-      When run script "${script}"
+      When run script "${script}" -y
       The status should be failure
       The output should be present
       The result of function run_call should be blank
+    End
+  End
+
+  Describe 'the questions the setup asks'
+    It 'hands the container the terminal to ask them on'
+      r="$(repo)"
+      cd "${r}" || return
+      When run command script -q -e -c "${script}" /dev/null
+      The status should be success
+      The output should be present
+      The result of function run_call should include '--interactive --tty'
+    End
+
+    It "stops before doing anything when there's no terminal to ask them on, and points at -y"
+      r="$(repo)"
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be failure
+      The error should include '-y'
+      The contents of file "${CALLS}" should equal ''
+    End
+
+    It 'goes ahead without a terminal under -y, which answers them all'
+      r="$(repo)"
+      cd "${r}" || return
+      When run script "${script}" -y
+      The status should be success
+      The output should be present
+      The result of function run_call should not include '--tty'
     End
   End
 End
