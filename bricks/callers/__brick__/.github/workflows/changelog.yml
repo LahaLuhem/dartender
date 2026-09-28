@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    # The changelog App's, since a ruleset can let an App past but not GITHUB_TOKEN.
+    # The changelog App's, which the rulesets let past to commit the line.
     with:
       app-id: ${{ vars.APP_ID }}
     secrets:
