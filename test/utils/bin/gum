@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Stands in for gum in the specs, set up by fresh_gh in test/utils/gh.sh. Logs each call and answers
-# the way Enter would, with confirm's --default and the --value of input and write, except for a call
-# matching ${ABORT_ON} (ctrl+c), ${ACCEPT_ON} (yes), ${DECLINE_ON} (no) or ${TYPE_ON} (one that gets
-# ${TYPED} instead).
+# the way Enter would, with confirm's --default and input's --value, except for a call matching
+# ${ABORT_ON} (ctrl+c), ${ACCEPT_ON} (yes), ${DECLINE_ON} (no) or ${TYPE_ON} (one that gets ${TYPED}
+# instead).
 # shellcheck disable=SC2154  # fresh_gh exports what this reads
 echo "gum $*" >> "${CALLS}"
 if [[ -n ${ABORT_ON} && "$*" == *"${ABORT_ON}"* ]]; then exit 130; fi
-if [[ $1 == input || $1 == write ]]; then
+if [[ $1 == input ]]; then
   value='' prev=''
   for arg; do
     if [[ ${prev} == --value ]]; then value="${arg}"; fi

@@ -16,23 +16,6 @@ Describe 'setup/apply.sh'
     cmp -s "${dir}/sent.json" "${dir}/want.json"
   }
 
-  # Whether stdin holds exactly the given lines, in order. satisfy sends it without a final newline.
-  lines_are() {
-    local want actual
-    printf -v want '%s\n' "$@"
-    IFS= read -r -d '' actual || :
-    [[ ${actual%$'\n'} == "${want%$'\n'}" ]]
-  }
-
-  sent_checks() {
-    jq -r '.rules[] | select(.type == "required_status_checks")
-      | .parameters.required_status_checks[].context' "${BODY}"
-  }
-
-  distinct_integration_ids() {
-    jq '[.. | .integration_id? // empty] | unique | length' "${BODY}"
-  }
-
   # Labels in sem-labels.json that no `gh label create <name> ... --force` call set up.
   unset_labels() {
     local names name
@@ -82,15 +65,6 @@ Describe 'setup/apply.sh'
     The output should be present
     The contents of file "${CALLS}" should include 'api POST repos/owner/repo/rulesets'
     The contents of file "${CALLS}" should not include 'rulesets/7'
-  End
-
-  It 'requires each --check on GitHub Actions, after the shared checks'
-    When run script "${apply}" owner/repo --check bench-ok --check 'bench (app) / ok'
-    The status should be success
-    The output should be present
-    The result of function sent_checks should satisfy \
-      lines_are 'ci / ok' 'conventions / ok' 'bench-ok' 'bench (app) / ok'
-    The result of function distinct_integration_ids should equal 1
   End
 
   It 'creates every label in sem-labels.json that the repo lacks'
@@ -172,6 +146,8 @@ Describe 'setup/apply.sh'
       'owner/repo --bogus'
       'owner/repo --bogus x'
       'owner/repo --check'
+      # A repo's own checks go in a ruleset of the repo's own.
+      'owner/repo --check bench-ok'
     End
 
     It "refuses '$1'"
