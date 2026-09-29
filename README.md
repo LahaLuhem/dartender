@@ -39,14 +39,17 @@ onto dartender, and again whenever something it sets needs to change.
 From the root of a clone of the repo:
 
 ```bash
-tmp=$(mktemp -d) \
-  && curl -fsSL https://github.com/LahaLuhem/dartender/archive/main.tar.gz \
-     | tar -xz -C "$tmp" --strip-components=1 \
-  && bash "$tmp/scripts/setup/setup.sh"
+(
+  tmp=$(mktemp -d) && trap 'rm -rf "$tmp"' EXIT INT TERM \
+    && curl -fsSL https://github.com/LahaLuhem/dartender/archive/main.tar.gz \
+       | tar -xz -C "$tmp" --strip-components=1 \
+    && bash "$tmp/scripts/setup/setup.sh"
+)
 ```
 
 That downloads dartender's `main` into a fresh temp folder and runs `setup.sh` from there, so every
-run gets the latest. The first run takes longer, while Docker builds the image.
+run gets the latest. The folder goes when the run ends, ctrl+c included. The first run takes longer,
+while Docker builds the image.
 
 It asks before each part, and for the few settings the callers take, which start from what the repo
 has now. Enter takes the starting answer:
