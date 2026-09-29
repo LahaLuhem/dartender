@@ -94,9 +94,21 @@ jobs:
           persist-credentials: false
       - run: docker build --tag dartender-setup - < scripts/setup/Dockerfile
 
+  # So a setup-uv bump that breaks the Python setup can't merge.
+  setup-python-uv:
+    name: Setup Python (uv)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./actions/setup-python-uv
+        with:
+          working-directory: test/workflow_tests/python_project
+
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, changelog, conventions, specs, setup-image]
+    needs: [ci, fixtures, publish, changelog, conventions, specs, setup-image, setup-python-uv]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -110,6 +122,7 @@ jobs:
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
             setup-image=${{ needs.setup-image.result }}
+            setup-python-uv=${{ needs.setup-python-uv.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1

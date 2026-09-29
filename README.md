@@ -149,6 +149,10 @@ The ruleset has to be in place before the `ci` caller lands. Until it requires `
 merges Dependabot's PRs on the spot instead of waiting for CI. A run that says yes to GitHub takes
 care of that.
 
+A repo's own workflow can use the setup actions here too, after its checkout, like
+`uses: LahaLuhem/dartender/actions/setup-python-uv@main` with `working-directory:` pointing at the
+Python project.
+
 ## Lints
 
 `lint-checks.json` lists the linters CI runs, each from the
@@ -169,6 +173,7 @@ one repo needs goes in a workflow of that repo's own, since the setup's next run
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` unless `pub-get` is false |
+| `actions/setup-python-uv/` | uv with its cache, then `uv sync --frozen` for the project's Python and locked dependencies |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
 | `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
@@ -180,7 +185,7 @@ one repo needs goes in a workflow of that repo's own, since the setup's next run
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
 | `test/utils/` | What the specs share, like stand-ins for `gh` and `docker` |
-| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against |
+| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against, and a Python project for `setup-python-uv` |
 
 ## Specs
 
