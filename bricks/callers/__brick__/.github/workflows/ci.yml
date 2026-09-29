@@ -19,3 +19,4 @@ jobs:
       coveralls: {{coveralls}}
       min-coverage: {{min_coverage}}
       coverage-excludes: "{{{coverage_excludes}}}"
+      python-min-coverage: {{python_min_coverage}}

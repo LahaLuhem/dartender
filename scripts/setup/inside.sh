@@ -29,6 +29,16 @@ ask_for() {
   answer="$(gum input --header "$1" --value "$2")"
 }
 
+# Like ask_for, but stops at anything that isn't a number, calling it $3 in the error.
+ask_number() {
+  ask_for "$1" "$2"
+  # Neither gum nor mason checks it's a number.
+  if [[ ! ${answer} =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    error "Invalid input: $3 has to be a number, not '${answer}'."
+    exit 1
+  fi
+}
+
 # What the repo's ci caller passes for the input $1 now, or else ci.yml's own default for it.
 caller_value() {
   local caller=.github/workflows/ci.yml
@@ -68,21 +78,22 @@ if [[ ${answer} == true ]]; then
   ask "Upload coverage to Coveralls?" "${coveralls}"
   coveralls="${answer}"
   min_coverage="$(caller_value min-coverage)"
-  ask_for "Lowest line coverage that passes, in percent" "${min_coverage}"
+  ask_number "Lowest line coverage that passes, in percent" "${min_coverage}" \
+    "the lowest coverage"
   min_coverage="${answer}"
-  # Neither gum nor mason checks it's a number.
-  if [[ ! ${min_coverage} =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-    error "Invalid input: the lowest coverage has to be a number, not '${min_coverage}'."
-    exit 1
-  fi
   coverage_excludes="$(caller_value coverage-excludes)"
   ask_for "Globs to leave out of coverage besides generated code, space-separated" \
     "${coverage_excludes}"
   coverage_excludes="${answer}"
+  python_min_coverage="$(caller_value python-min-coverage)"
+  ask_number "Lowest coverage for benchmark/python's tests, in percent, 0 for none" \
+    "${python_min_coverage}" "the lowest Python coverage"
+  python_min_coverage="${answer}"
   shellcheck="$(shellcheck_paths)"
   ask_for "Shell scripts for ShellCheck, space-separated globs, blank for none" "${shellcheck}"
   shellcheck="${answer}"
-  "${here}/callers.sh" "${coveralls}" "${min_coverage}" "${coverage_excludes}" "${shellcheck}"
+  "${here}/callers.sh" "${coveralls}" "${min_coverage}" "${coverage_excludes}" \
+    "${python_min_coverage}" "${shellcheck}"
 else
   info "Left the callers and lint-checks.json in .github as they are"
 fi

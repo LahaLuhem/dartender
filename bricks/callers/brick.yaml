@@ -19,6 +19,9 @@ vars:
   coverage_excludes:
     type: string
     description: The coverage-excludes input of dartender's ci.yml.
+  python_min_coverage:
+    type: number
+    description: The python-min-coverage input of dartender's ci.yml.
   # Its tags in lint-checks.json sit inline, since mason leaves a blank line for a tag on its own.
   shellcheck:
     type: boolean

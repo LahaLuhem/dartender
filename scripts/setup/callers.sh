@@ -6,13 +6,14 @@ here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
 
 usage() {
-  error "Usage: callers.sh <coveralls> <min-coverage> <coverage-excludes> <shellcheck-paths>" \
-    "[folder]"
+  error "Usage: callers.sh <coveralls> <min-coverage> <coverage-excludes> <python-min-coverage>" \
+    "<shellcheck-paths> [folder]"
   exit 2
 }
 
-[[ $# -ge 4 && $# -le 5 ]] || usage
-coveralls="$1" min_coverage="$2" coverage_excludes="$3" shellcheck_paths="$4" repo="${5:-.}"
+[[ $# -ge 5 && $# -le 6 ]] || usage
+coveralls="$1" min_coverage="$2" coverage_excludes="$3" python_min_coverage="$4"
+shellcheck_paths="$5" repo="${6:-.}"
 branch="$(git -C "${repo}" symbolic-ref --short refs/remotes/origin/HEAD)"
 branch="${branch#origin/}"
 # mason renders a section even for an empty string, so the brick switches ShellCheck on this.
@@ -25,7 +26,8 @@ rc=0
 out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-exit-if-changed \
   --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
-  --coverage_excludes "${coverage_excludes}" 2>&1)" || rc=$?
+  --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
+  2>&1)" || rc=$?
 case "${rc}" in
   0) success "The callers and lint-checks.json in ${repo}/.github are already up to date" ;;
   # What --set-exit-if-changed exits with when it changed a file.

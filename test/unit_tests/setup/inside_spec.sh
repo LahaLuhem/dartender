@@ -127,7 +127,8 @@ Describe 'setup/inside.sh'
       r="$(repo "${manifest}")"
       track "${r}" pubspec.yaml
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
-        '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
+        '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
+        '      python-min-coverage: 80')"
       track "${r}" .github/workflows/ci.yml "${caller}"
       cd "${r}" || return
       When run script "${script}"
@@ -135,7 +136,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The line 1 of result of function asked should include 'callers'
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80'
     End
 
     It "falls back to ci.yml's own defaults for a repo without a ci caller"
@@ -144,12 +145,13 @@ Describe 'setup/inside.sh'
       coveralls="$(default_of coveralls)"
       min_coverage="$(default_of min-coverage)"
       excludes="$(default_of coverage-excludes)"
+      python_min_coverage="$(default_of python-min-coverage)"
       cd "${r}" || return
       When run script "${script}"
       The status should be success
       The output should be present
       The result of function make_call should end with \
-        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes}"
+        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage}"
     End
 
     It "has the same run's dependabot.yml watch the callers it wrote"
@@ -180,7 +182,8 @@ Describe 'setup/inside.sh'
     with_caller() {
       local caller
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
-        '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
+        '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
+        '      python-min-coverage: 80')"
       track "${r}" .github/workflows/ci.yml "${caller}"
     }
 
@@ -195,12 +198,14 @@ Describe 'setup/inside.sh'
       The result of function asked should include '--default=false Upload coverage to Coveralls?'
       The result of function asked should include '--value 90'
       The result of function asked should include '--value lib/x.dart'
+      The result of function asked should include '--value 80'
     End
 
     Describe 'what gets typed'
       Parameters
         'the lowest coverage' 'coverage that passes' 80 '--min_coverage 80 '
         'the excludes' 'space-separated' 'lib/y.dart' '--coverage_excludes lib/y.dart'
+        'the lowest Python coverage' 'benchmark/python' 70 '--python_min_coverage 70'
       End
 
       It "takes what gets typed for $1 over what the repo has now"
@@ -239,17 +244,24 @@ Describe 'setup/inside.sh'
       The result of function make_call should include '--coveralls true '
     End
 
-    It "stops before writing anything at a lowest coverage that isn't a number"
-      r="$(repo "${manifest}")"
-      track "${r}" pubspec.yaml
-      export TYPE_ON='coverage that passes' TYPED='ninety'
-      cd "${r}" || return
-      When run script "${script}"
-      The status should be failure
-      The output should be present
-      The error should include 'Invalid input'
-      The result of function make_call should be blank
-      The file "${r}/.github/dependabot.yml" should not be exist
+    Describe "a coverage that isn't a number"
+      Parameters
+        'the lowest coverage' 'coverage that passes'
+        'the lowest Python coverage' 'benchmark/python'
+      End
+
+      It "stops before writing anything at $1 that isn't a number"
+        r="$(repo "${manifest}")"
+        track "${r}" pubspec.yaml
+        export TYPE_ON="$2" TYPED='ninety'
+        cd "${r}" || return
+        When run script "${script}"
+        The status should be failure
+        The output should be present
+        The error should include 'Invalid input'
+        The result of function make_call should be blank
+        The file "${r}/.github/dependabot.yml" should not be exist
+      End
     End
 
     It 'stops at ctrl+c in an input, instead of taking what was there'
@@ -273,7 +285,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The contents of file "${CALLS}" should not include 'gum '
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80'
     End
   End
 
