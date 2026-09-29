@@ -39,6 +39,8 @@ jobs:
       working-directory: test/workflow_tests/${{ matrix.fixture }}
       # The fixtures aren't on Coveralls.
       coveralls: false
+      # Low, just so the Python fixture's pytest runs with the gate on.
+      python-min-coverage: 1
 
   # Publishing as well, all but the upload, which only a real release can test.
   publish:
@@ -104,7 +106,7 @@ jobs:
           persist-credentials: false
       - uses: ./actions/setup-python-uv
         with:
-          working-directory: test/workflow_tests/python_project
+          working-directory: test/workflow_tests/dart_package/benchmark/python
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:

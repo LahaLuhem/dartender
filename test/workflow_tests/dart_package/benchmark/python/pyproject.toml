@@ -1,0 +1,19 @@
+[project]
+name = "python-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.9",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+# Without --cov, --cov-fail-under measures nothing and passes, so the self-test's gate needs it.
+addopts = "--cov=main"

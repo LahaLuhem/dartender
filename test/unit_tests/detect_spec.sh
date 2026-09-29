@@ -51,7 +51,7 @@ Describe 'detect.sh'
         "an example's pubspec" 'example/pubspec.yaml' 'pub /example'
         'a Gradle build' 'example/android/settings.gradle.kts' 'gradle /example/android'
         'a Groovy Gradle build' 'android/settings.gradle' 'gradle /android'
-        'a uv project' 'benchmark/python/uv.lock' 'uv /benchmark/python'
+        'a uv project' 'tools/python/uv.lock' 'uv /tools/python'
         'a Swift package' 'ios/a/Package.swift' 'swift /ios/a'
         'a workflow' '.github/workflows/ci.yml' 'github-actions /'
         'a workflow in a .yaml file' '.github/workflows/ci.yaml' 'github-actions /'
@@ -217,49 +217,32 @@ Describe 'detect.sh'
     The line 6 of output should equal 'example-tests=false'
   End
 
-  Describe 'the Python projects'
+  Describe 'the benchmarks in Python'
     Describe 'each kind'
       Parameters
-        'no project' '' '' 'python=[]' 'none'
-        'a project with tests' 'benchmark/python/uv.lock' 'benchmark/python/tests/test_a.py' \
-          'python=[{"directory":"benchmark/python","tests":true}]' \
-          "\`benchmark/python\` with tests"
-        'a project without tests' 'benchmark/python/uv.lock' '' \
-          'python=[{"directory":"benchmark/python","tests":false}]' \
-          "\`benchmark/python\` without tests"
-        'a project at the root' 'uv.lock' 'tests/test_a.py' \
-          'python=[{"directory":".","tests":true}]' "\`.\` with tests"
+        'none' '' 'python=false' 'none'
+        'them with their tests' 'benchmark/python/tests/test_a.py' 'python=true' \
+          "\`benchmark/python\`"
       End
 
       It "finds $1"
         r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
         if [[ -n "$2" ]]; then track "${r}" "$2"; fi
-        if [[ -n "$3" ]]; then track "${r}" "$3"; fi
         summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
         export GITHUB_STEP_SUMMARY="${summary}"
         When run script scripts/detect.sh "${r}"
-        The line 8 of output should equal "$4"
-        The contents of file "${summary}" should include "| Python | $5 |"
+        The line 7 of output should equal "$3"
+        The contents of file "${summary}" should include "| Python | $4 |"
       End
     End
 
-    It 'leaves out one in a test folder, which is a fixture'
+    It 'fails on them without tests, which the convention needs'
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
-      track "${r}" test/fixture/uv.lock
+      track "${r}" benchmark/python/uv.lock
       When run script scripts/detect.sh "${r}"
-      The line 8 of output should equal 'python=[]'
-    End
-
-    It 'finds one inside the folder it reads, the way the self-test reads its fixtures'
-      r="$(repo)"
-      fixture="${r}/test/workflow_tests/a"
-      mkdir -p "${fixture}/.github"
-      printf '%s' '{"image":"img","checks":[{"name":"a","cmd":"a"}]}' \
-        > "${fixture}/.github/lint-checks.json"
-      track "${r}" test/workflow_tests/a/benchmark/python/uv.lock
-      track "${r}" test/workflow_tests/a/benchmark/python/tests/test_a.py
-      When run script scripts/detect.sh "${fixture}"
-      The line 8 of output should equal 'python=[{"directory":"benchmark/python","tests":true}]'
+      The status should be failure
+      The output should be present
+      The stderr should start with '::error::'
     End
   End
 

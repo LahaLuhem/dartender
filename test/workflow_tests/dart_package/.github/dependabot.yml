@@ -9,3 +9,11 @@ updates:
       pub:
         patterns: ['*']
         update-types: [minor, patch]
+  - package-ecosystem: uv
+    directory: /benchmark/python
+    schedule:
+      interval: weekly
+    groups:
+      uv:
+        patterns: ['*']
+        update-types: [minor, patch]

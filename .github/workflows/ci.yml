@@ -19,6 +19,12 @@ on:
         description: Uploads coverage to Coveralls. Turn it off for a repo that isn't set up there.
         type: boolean
         default: true
+      python-min-coverage:
+        description: >-
+          The lowest coverage benchmark/python's tests can have, in percent, or 0 for none. It
+          needs the project's own --cov, without which nothing gets measured and anything passes.
+        type: number
+        default: 0
 
 permissions:
   contents: read
@@ -39,6 +45,7 @@ jobs:
       example: ${{ steps.detect.outputs.example }}
       example-tests: ${{ steps.detect.outputs.example-tests }}
       dependabot: ${{ steps.detect.outputs.dependabot }}
+      python: ${{ steps.detect.outputs.python }}
       android-changed: ${{ steps.changes.outputs.android }}
     steps:
       - uses: actions/checkout@v7
@@ -249,6 +256,56 @@ jobs:
       - working-directory: ${{ inputs.working-directory }}/example
         run: flutter build apk --release
 
+  python-lint:
+    name: Ruff lint
+    needs: plan
+    if: needs.plan.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-python-uv
+        with:
+          working-directory: ${{ inputs.working-directory }}/benchmark/python
+      - working-directory: ${{ inputs.working-directory }}/benchmark/python
+        run: uv run ruff check .
+
+  python-format:
+    name: Ruff format
+    needs: plan
+    if: needs.plan.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-python-uv
+        with:
+          working-directory: ${{ inputs.working-directory }}/benchmark/python
+      - working-directory: ${{ inputs.working-directory }}/benchmark/python
+        run: uv run ruff format --check .
+
+  python-test:
+    name: Pytest
+    needs: plan
+    if: needs.plan.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-python-uv
+        with:
+          working-directory: ${{ inputs.working-directory }}/benchmark/python
+      - working-directory: ${{ inputs.working-directory }}/benchmark/python
+        env:
+          # Only with a gate, since pytest stops on the flag in a project without pytest-cov.
+          PYTEST_ADDOPTS: >-
+            ${{ inputs.python-min-coverage > 0
+            && format('--cov-fail-under={0}', inputs.python-min-coverage) || '' }}
+        run: uv run pytest
+
   # Every Dependabot bump, majors included. The required checks decide, and a merge isn't a release.
   auto-merge:
     name: Auto-merge
@@ -281,6 +338,9 @@ jobs:
       - example-dependencies
       - example-test
       - example-android
+      - python-lint
+      - python-format
+      - python-test
       - auto-merge
     if: always()
     runs-on: ubuntu-latest
@@ -299,6 +359,9 @@ jobs:
             example-dependencies=${{ needs.example-dependencies.result }}
             example-test=${{ needs.example-test.result }}
             example-android=${{ needs.example-android.result }}
+            python-lint=${{ needs.python-lint.result }}
+            python-format=${{ needs.python-format.result }}
+            python-test=${{ needs.python-test.result }}
             auto-merge=${{ needs.auto-merge.result }}
         run: echo "$RESULTS"
       # A job skipped by its own `if` counts as a pass. Failed or cancelled doesn't.
