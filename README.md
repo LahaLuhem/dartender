@@ -4,8 +4,8 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
 > Under construction. For now it lints, checks action inputs and the Dependabot config, runs the
-> package, example and PR checks, auto-merges Dependabot's PRs, writes merged PRs' changelog lines
-> and publishes to pub.dev. Workspaces are on their way.
+> package, example, Python and PR checks, auto-merges Dependabot's PRs, writes merged PRs'
+> changelog lines and publishes to pub.dev. Workspaces are on their way.
 
 ## How it fits together
 
@@ -20,8 +20,8 @@ small files of its own, plus some settings on GitHub that the jobs count on, and
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
 
-Anything only one repo needs, like a benchmark, lives in a workflow of that repo's own, next to the
-callers.
+Anything only one repo needs, like browser tests, lives in a workflow of that repo's own, next to
+the callers.
 
 ## Setting up a repo
 
@@ -60,11 +60,12 @@ has now. Enter takes the starting answer:
 | Upload coverage to Coveralls? | What the `ci` caller passes now, or else `ci.yml`'s default |
 | The lowest line coverage that passes | The same |
 | Globs to leave out of coverage, besides generated code | The same |
+| The lowest coverage for `benchmark/python`'s tests, 0 for none | The same |
 | The shell scripts for ShellCheck | What ShellCheck checks now, or else `scripts/*.sh` when there's no `lint-checks.json` yet and that finds any |
 | Write `dependabot.yml`? | Yes |
 | Set the ruleset, labels and merge settings on GitHub? | Yes |
 
-The four in the middle only come up after a yes to the callers. A no leaves that part as it is, and
+The five in the middle only come up after a yes to the callers. A no leaves that part as it is, and
 ctrl+c stops the setup. Put `-y` after `setup.sh` to go with every starting answer without being
 asked, which is also the only way to run it without a terminal.
 
@@ -88,7 +89,7 @@ the top.
 
 ### The repo's own checks
 
-A check only one repo runs, like a benchmark, goes in a ruleset of the repo's own, made under
+A check only one repo runs, like browser tests, goes in a ruleset of the repo's own, made under
 **Settings → Rules → Rulesets**. GitHub requires the checks of every ruleset on a branch, so both
 have to pass.
 
@@ -153,8 +154,7 @@ merges Dependabot's PRs on the spot instead of waiting for CI. A run that says y
 care of that.
 
 A repo's own workflow can use the setup actions here too, after its checkout, like
-`uses: LahaLuhem/dartender/actions/setup-python-uv@main` with `working-directory:` pointing at the
-Python project.
+`uses: LahaLuhem/dartender/actions/setup-flutter@main`.
 
 ## Lints
 
@@ -162,6 +162,17 @@ Python project.
 [linterpol](https://github.com/LahaLuhem/linterpol) image, and `setup.sh` writes it. Repos without
 their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actions/lint/defaults/`. A linter only
 one repo needs goes in a workflow of that repo's own, since the setup's next run rewrites the file.
+
+## Python
+
+A repo's Python goes in one [uv](https://docs.astral.sh/uv/) project at `benchmark/python`, with
+its tests in `benchmark/python/tests`. `ci.yml` runs Ruff lint, Ruff format and Pytest there, with
+the project's own Ruff and pytest, so both go in its dev dependencies. A `benchmark/python` without
+`tests` fails the run, and Python anywhere else goes unchecked.
+
+The coverage gate, which the setup asks for, is off at 0. Above that it needs pytest-cov too, and a
+`--cov` in the project's pytest settings, since without one nothing gets measured and anything
+passes.
 
 ## What's inside
 
@@ -188,7 +199,7 @@ one repo needs goes in a workflow of that repo's own, since the setup's next run
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
 | `test/utils/` | What the specs share, like stand-ins for `gh` and `docker` |
-| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against, and a Python project for `setup-python-uv` |
+| `test/workflow_tests/` | Packages laid out like the real repos, `dart_package` with a `benchmark/python` too, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against |
 
 ## Specs
 
