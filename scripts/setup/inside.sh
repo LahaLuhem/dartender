@@ -41,10 +41,13 @@ ask_number() {
 
 # What the repo's ci caller passes for the input $1 now, or else ci.yml's own default for it.
 caller_value() {
-  local caller=.github/workflows/ci.yml
+  local caller=.github/workflows/ci.yml has=false
   export INPUT="$1"
-  if [[ -f ${caller} ]] \
-    && yq -e '(.jobs.ci.with // {}) | has(strenv(INPUT))' "${caller}" > /dev/null; then
+  # Not yq -e, which prints "Error: no matches found" for a caller without the input.
+  if [[ -f ${caller} ]]; then
+    has="$(yq '(.jobs.ci.with // {}) | has(strenv(INPUT))' "${caller}")"
+  fi
+  if [[ ${has} == true ]]; then
     yq '.jobs.ci.with[strenv(INPUT)]' "${caller}"
   else
     yq '.on.workflow_call.inputs[strenv(INPUT)].default' "${here}/../../.github/workflows/ci.yml"

@@ -154,6 +154,22 @@ Describe 'setup/inside.sh'
         "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage}"
     End
 
+    It "falls back to ci.yml's own default for an input the ci caller doesn't pass yet, quietly"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
+        '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
+      track "${r}" .github/workflows/ci.yml "${caller}"
+      python_min_coverage="$(default_of python-min-coverage)"
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The stderr should be blank
+      The result of function make_call should end with \
+        "--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage ${python_min_coverage}"
+    End
+
     It "has the same run's dependabot.yml watch the callers it wrote"
       r="$(repo "${manifest}")"
       track "${r}" pubspec.yaml
