@@ -1,6 +1,10 @@
 # Shared YAML rules for the package repos. A repo can bring its own .yamllint.yaml instead.
 extends: default
 
+# Written by Flutter's DevTools, not kept by hand.
+ignore: |
+  **/devtools_options.yaml
+
 rules:
   # Same width as .editorconfig.
   line-length:
