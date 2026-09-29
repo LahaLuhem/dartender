@@ -34,7 +34,7 @@ echo "example-tests=${example_tests}"
 
 # New files count too, so setup.sh's dependabot.yml covers the callers written in the same run.
 files="$(git ls-files --cached --others --exclude-standard)"
-watched=''
+watched='' projects=''
 while IFS= read -r file; do
   # --cached still lists a file that's deleted but not committed yet.
   if [[ ! -e "${file}" ]]; then continue; fi
@@ -57,10 +57,21 @@ while IFS= read -r file; do
     *) ;;
   esac
   if [[ -n "${ecosystem}" ]]; then watched+="${ecosystem}"$'\t'"${dir:-/}"$'\n'; fi
+  if [[ "${ecosystem}" == uv ]]; then
+    project="${dir#/}"
+    project="${project:-.}"
+    # A project with no tests may not have pytest at all, so only one with tests gets Pytest.
+    tests=false
+    if [[ -d "${project}/tests" ]]; then tests=true; fi
+    projects+="${project}"$'\t'"${tests}"$'\n'
+  fi
 done <<< "${files}"
 dependabot="$(jq -R -n -c '[inputs | select(. != "")] | unique
   | map(split("\t") | {"package-ecosystem": .[0], directory: .[1]})' <<< "${watched}")"
 echo "dependabot=${dependabot}"
+python="$(jq -R -n -c '[inputs | select(. != "") | split("\t")
+  | {directory: .[0], tests: (.[1] == "true")}]' <<< "${projects}")"
+echo "python=${python}"
 
 # Only Actions has a summary page, so a run anywhere else skips it.
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
@@ -71,12 +82,15 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   if [[ "${flutter}" == true ]]; then kind=Flutter; elif [[ "${package}" == true ]]; then kind="pure Dart"; fi
   shown=none
   if [[ "${example_tests}" == true ]]; then shown="with tests"; elif [[ "${example}" == true ]]; then shown="without tests"; fi
+  pythons="$(jq -r 'map("`\(.directory)` \(if .tests then "with" else "without" end) tests")
+    | join(", ")' <<< "${python}")"
   cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
 ### What dartender found
 | What | Found |
 |---|---|
 | Package | ${kind} |
 | Example | ${shown} |
+| Python | ${pythons:-none} |
 | Linters | ${names} |
 | Lint image | \`${image}\` |
 | Dependabot | ${watching:-none} |

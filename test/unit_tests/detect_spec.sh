@@ -25,7 +25,7 @@ Describe 'detect.sh'
     summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
     export GITHUB_STEP_SUMMARY="${summary}"
     expected="$(printf '%s\n' '### What dartender found' '| What | Found |' '|---|---|' \
-      '| Package | none |' '| Example | none |' \
+      '| Package | none |' '| Example | none |' '| Python | none |' \
       '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |" '| Dependabot | none |')"
     When run script scripts/detect.sh "${r}"
     The output should be present
@@ -215,6 +215,52 @@ Describe 'detect.sh'
     When run script scripts/detect.sh "${r}"
     The line 5 of output should equal 'example=false'
     The line 6 of output should equal 'example-tests=false'
+  End
+
+  Describe 'the Python projects'
+    Describe 'each kind'
+      Parameters
+        'no project' '' '' 'python=[]' 'none'
+        'a project with tests' 'benchmark/python/uv.lock' 'benchmark/python/tests/test_a.py' \
+          'python=[{"directory":"benchmark/python","tests":true}]' \
+          "\`benchmark/python\` with tests"
+        'a project without tests' 'benchmark/python/uv.lock' '' \
+          'python=[{"directory":"benchmark/python","tests":false}]' \
+          "\`benchmark/python\` without tests"
+        'a project at the root' 'uv.lock' 'tests/test_a.py' \
+          'python=[{"directory":".","tests":true}]' "\`.\` with tests"
+      End
+
+      It "finds $1"
+        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+        if [[ -n "$2" ]]; then track "${r}" "$2"; fi
+        if [[ -n "$3" ]]; then track "${r}" "$3"; fi
+        summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+        export GITHUB_STEP_SUMMARY="${summary}"
+        When run script scripts/detect.sh "${r}"
+        The line 8 of output should equal "$4"
+        The contents of file "${summary}" should include "| Python | $5 |"
+      End
+    End
+
+    It 'leaves out one in a test folder, which is a fixture'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" test/fixture/uv.lock
+      When run script scripts/detect.sh "${r}"
+      The line 8 of output should equal 'python=[]'
+    End
+
+    It 'finds one inside the folder it reads, the way the self-test reads its fixtures'
+      r="$(repo)"
+      fixture="${r}/test/workflow_tests/a"
+      mkdir -p "${fixture}/.github"
+      printf '%s' '{"image":"img","checks":[{"name":"a","cmd":"a"}]}' \
+        > "${fixture}/.github/lint-checks.json"
+      track "${r}" test/workflow_tests/a/benchmark/python/uv.lock
+      track "${r}" test/workflow_tests/a/benchmark/python/tests/test_a.py
+      When run script scripts/detect.sh "${fixture}"
+      The line 8 of output should equal 'python=[{"directory":"benchmark/python","tests":true}]'
+    End
   End
 
   Describe 'a broken manifest'

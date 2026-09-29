@@ -28,6 +28,9 @@ outputs:
   dependabot:
     description: What Dependabot has to watch, as JSON pairs of package-ecosystem and directory.
     value: ${{ steps.detect.outputs.dependabot }}
+  python:
+    description: Each folder with a uv.lock, as JSON with its directory and whether it has tests.
+    value: ${{ steps.detect.outputs.python }}
 
 runs:
   using: composite
