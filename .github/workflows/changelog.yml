@@ -81,7 +81,6 @@ jobs:
         with:
           client-id: ${{ inputs.app-id }}
           private-key: ${{ secrets.app-private-key }}
-          # Only what the commit needs.
           permission-contents: write
       - uses: $/actions/changelog
         with:

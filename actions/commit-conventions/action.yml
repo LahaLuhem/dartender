@@ -1,5 +1,5 @@
 name: Commit conventions
-description: Fails on a blank description, a merge commit, or a subject over 82 characters.
+description: Fails on a blank description, a merge commit, or an overlong subject.
 
 inputs:
   body:

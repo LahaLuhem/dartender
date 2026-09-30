@@ -31,8 +31,7 @@ a real package repo.
 - **A setup script's spec covers each thing it sets three ways:** missing, different, and already
   set. The last one catches a write that didn't need to happen.
 - **Fixtures come from the tool that makes real packages** (`flutter create`, `dart create`,
-  `uv init`), and change only where a job needs it, so CI gets tested on what a package repo
-  actually has.
+  `uv init`), and change only where a job needs it, so CI gets tested on what a package repo has.
 
 ## CI YAML
 

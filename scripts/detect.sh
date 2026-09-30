@@ -59,7 +59,16 @@ while IFS= read -r file; do
     */pubspec.yaml) ecosystem=pub ;;
     */settings.gradle | */settings.gradle.kts) ecosystem=gradle ;;
     */uv.lock) ecosystem=uv ;;
-    */Package.swift) ecosystem=swift ;;
+    # A Flutter plugin's own package needs FlutterFramework, which only exists at build time.
+    */Package.swift)
+      platform="${dir%/*}"
+      pubspec=".${platform%/*}/pubspec.yaml"
+      plugin=false
+      if [[ "${platform##*/}" =~ ^(ios|macos|darwin)$ && -f "${pubspec}" ]]; then
+        plugin="$(yq '.flutter.plugin != null' "${pubspec}")"
+      fi
+      if [[ "${plugin}" != true ]]; then ecosystem=swift; fi
+      ;;
     # Only composite actions have `uses:` lines to bump.
     */action.yml | */action.yaml)
       using="$(yq .runs.using "${file}")"

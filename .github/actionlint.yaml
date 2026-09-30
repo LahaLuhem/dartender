@@ -1,10 +1,10 @@
 paths:
   .github/workflows/**/*.yml:
     ignore:
-      # actionlint predates `$/` (GitHub shipped it in July 2026), and dartender uses it.
+      # actionlint predates `$/`, and dartender uses it.
       - 'specifying action "\$/[^"]+" in invalid format'
-      # And the concurrency `queue` key (May 2026), which the conventions gate uses.
+      # And the concurrency `queue` key, which the conventions gate uses.
       - 'unexpected key "queue" for "concurrency" section'
-      # And create-github-app-token's `client-id` (April 2026), which check-inputs.sh covers.
+      # And create-github-app-token's `client-id`, which check-inputs.sh covers.
       - 'missing input "app-id" which is required by action "actions/create-github-app-token@v3"'
       - 'input "client-id" is not defined in action "actions/create-github-app-token@v3"'

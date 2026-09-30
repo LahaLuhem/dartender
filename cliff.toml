@@ -1,5 +1,4 @@
-# Dartender's own changelog, from its conventional commits: `git cliff` prints it.
-# Package repos don't use this. They write one entry per PR at release time instead.
+# Dartender's own changelog, for `git cliff`. Package repos write theirs one PR at a time.
 
 [changelog]
 header = "# Changelog\n\n"
@@ -35,6 +34,6 @@ commit_parsers = [
     { message = "^remove", group = "<!-- 4 -->Removed" },
     { message = "^fix", group = "<!-- 5 -->Fixed" },
     { message = "^security", group = "<!-- 6 -->Security" },
-    # init is only the very first commit.
+    # init is only the first commit.
     { message = "^(docs|style|test|build|ci|chore|init)", skip = true },
 ]

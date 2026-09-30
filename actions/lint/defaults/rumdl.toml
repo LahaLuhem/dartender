@@ -5,7 +5,7 @@
 exclude = [
     "CHANGELOG.md",
     ".github/ISSUE_TEMPLATE/**",
-    # Flutter's launch image README, in any app at any depth, dartender's fixtures included.
+    # Flutter's launch image README, in any app.
     "**/ios/Runner/Assets.xcassets/**",
     "benchmark/reports/**",
 ]

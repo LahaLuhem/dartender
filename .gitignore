@@ -1,5 +1,5 @@
 ### Custom ###
-# AI symlinks point into adjacent .ai/ folders; targets are committed, symlinks are not.
+# The AI symlinks point into .ai/, whose files are committed. The links themselves aren't.
 /AGENTS.md
 /CLAUDE.md
 

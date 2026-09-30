@@ -3,9 +3,7 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. For now it lints, checks action inputs and the Dependabot config, runs the
-> package, example, Python and PR checks, auto-merges Dependabot's PRs, writes merged PRs'
-> changelog lines and publishes to pub.dev. Workspaces are on their way.
+> Under construction. Workspaces are on their way.
 
 ## How it fits together
 
@@ -26,7 +24,7 @@ the callers.
 ## Setting up a repo
 
 `scripts/setup/setup.sh` gets a package repo ready for the workflows here. Run it when a repo moves
-onto dartender, and again whenever something it sets needs to change.
+onto dartender, and [again](#when-to-run-it-again) when something changes.
 
 ### What you need
 
@@ -47,9 +45,8 @@ From the root of a clone of the repo:
 )
 ```
 
-That downloads dartender's `main` into a fresh temp folder and runs `setup.sh` from there, so every
-run gets the latest. The folder goes when the run ends, ctrl+c included. The first run takes longer,
-while Docker builds the image.
+That runs the latest `setup.sh` from a temp folder, which goes when the run ends. The first run
+takes longer, while Docker builds the image.
 
 It asks before each part, and for the few settings the callers take, which start from what the repo
 has now. Enter takes the starting answer:
@@ -65,7 +62,7 @@ has now. Enter takes the starting answer:
 | Write `dependabot.yml`? | Yes |
 | Set the ruleset, labels and merge settings on GitHub? | Yes |
 
-The five in the middle only come up after a yes to the callers. A no leaves that part as it is, and
+The ones in the middle only come up after a yes to the callers. A no leaves that part as it is, and
 ctrl+c stops the setup. Put `-y` after `setup.sh` to go with every starting answer without being
 asked, which is also the only way to run it without a terminal.
 
@@ -80,12 +77,11 @@ repo's older ruleset, if it has one, since nothing runs that one's required chec
 | `lint-checks.json` | `.github/`, for you to commit | The same |
 | `dependabot.yml`, a weekly block for each folder Dependabot has to watch | `.github/`, for you to commit | The repo's files, new ones included |
 | The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` and lets the changelog App past | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
-| The seven `sem-*` labels, one per changelog section | GitHub | [`sem-labels.json`](scripts/sem-labels.json) |
+| The `sem-*` labels, one per changelog section | GitHub | [`sem-labels.json`](scripts/sem-labels.json) |
 | Merge settings, like rebase merges only and auto-merge | GitHub | [`apply.sh`](scripts/setup/apply.sh) |
 
-Whatever is already set stays as it is, and it says so, so running it again is safe. The files come
-out whole on every run, though, so edits made by hand don't survive the next one. Each says so at
-the top.
+What's already set stays as it is, so running it again is safe. The files get rewritten whole,
+though, so hand edits don't survive the next run.
 
 ### The repo's own checks
 
@@ -189,22 +185,22 @@ passes.
 | `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` unless `pub-get` is false |
 | `actions/setup-python-uv/` | uv with its cache, then `uv sync --frozen` for the project's Python and locked dependencies |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
-| `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or a commit subject over 82 characters |
-| `actions/sem-label/` | Fails unless the PR has exactly one of the seven `sem-*` labels, read fresh from the API |
+| `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or an overlong commit subject |
+| `actions/sem-label/` | Fails unless the PR has exactly one `sem-*` label, read fresh from the API |
 | `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
 | `actions/changelog-type/` | Finds the PR a pushed commit came from, and the changelog section its line goes under |
 | `actions/changelog/` | Adds that line with cider, and commits it through the contents API |
 | `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
-| `scripts/` | The shell the actions run, and the seven `sem-*` labels in `sem-labels.json` |
+| `scripts/` | The shell the actions run, and the `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
 | `test/utils/` | What the specs share, like stand-ins for `gh` and `docker` |
-| `test/workflow_tests/` | Packages laid out like the real repos, `dart_package` with a `benchmark/python` too, which the self-test runs `ci.yml` and dry-runs of `publish.yml` and `changelog.yml` against |
+| `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs the workflows against |
 
 ## Specs
 
 `test/run.sh` runs the [ShellSpec](https://shellspec.info) specs in Docker the same way CI does.
-It hands any arguments to `shellspec`, so `test/run.sh test/unit_tests/detect_spec.sh` runs just
+It hands any arguments to `shellspec`, so `test/run.sh test/unit_tests/detect_spec.sh` runs only
 that one. Where specs go and how to write them is in [CODESTYLE.md](CODESTYLE.md#specs).
 
 ## Changing things here

@@ -1,5 +1,5 @@
 name: Sem-* label
-description: Fails unless the pull request has exactly one of the seven sem-* labels.
+description: Fails unless the pull request has exactly one sem-* label.
 
 inputs:
   repo:

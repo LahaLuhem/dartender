@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Sets a package repo's ruleset, sem-* labels and merge settings, with gh logged in as its admin.
-# Whatever is already set stays as it is, so running it again is safe.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"

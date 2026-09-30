@@ -65,6 +65,40 @@ Describe 'detect.sh'
       End
     End
 
+    Describe "a Flutter plugin's own Swift package"
+      Parameters
+        'iOS' 'ios'
+        'macOS' 'macos'
+        "iOS and macOS's shared source" 'darwin'
+      End
+
+      It "is left out for $1, since Flutter makes its FlutterFramework at build time"
+        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+        track "${r}" pubspec.yaml \
+          $'name: a\nflutter:\n  plugin:\n    platforms:\n      ios:\n        pluginClass: APlugin\n'
+        track "${r}" "$2/a/Package.swift"
+        When run script scripts/detect.sh "${r}"
+        The output should satisfy watches 'pub /'
+      End
+    End
+
+    It "leaves out a Flutter plugin's own Swift package in a subfolder too"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" packages/a/pubspec.yaml \
+        $'name: a\nflutter:\n  plugin:\n    platforms:\n      ios:\n        pluginClass: APlugin\n'
+      track "${r}" packages/a/ios/a/Package.swift
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /packages/a'
+    End
+
+    It "still watches a Swift package in a Flutter app's ios folder"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\nflutter:\n  uses-material-design: true\n'
+      track "${r}" ios/a/Package.swift
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /' 'swift /ios/a'
+    End
+
     It 'watches each composite action in its own folder'
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
       track "${r}" .github/actions/a/action.yml $'runs:\n  using: composite\n  steps: []\n'
