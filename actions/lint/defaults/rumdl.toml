@@ -5,9 +5,8 @@
 exclude = [
     "CHANGELOG.md",
     ".github/ISSUE_TEMPLATE/**",
-    # At any depth, so dartender's fixtures count too.
-    "**/example/ios/**",
-    "**/example/android/**",
+    # Flutter's launch image README, in any app at any depth, dartender's fixtures included.
+    "**/ios/Runner/Assets.xcassets/**",
     "benchmark/reports/**",
 ]
 # MD033: the <details> blocks and <a id> anchors are on purpose.
