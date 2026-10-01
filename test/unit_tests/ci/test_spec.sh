@@ -32,9 +32,10 @@ Describe 'ci/test.sh'
       --collect-coverage-from imports --no-optimization "$@"
   }
 
-  # Prints what very_good was asked to run, one argument per line.
+  # Prints what very_good was asked to run, one argument per line. Like the real one, it skips the
+  # run as a pass when the folder it starts in has no test folder.
   Mock very_good
-    printf '%s\n' "$@"
+    if [[ -d test ]]; then printf '%s\n' "$@"; else echo 'No test folder found in .'; fi
   End
 
   It 'tests a single package from its root, reporting on its lib'
@@ -53,6 +54,17 @@ Describe 'ci/test.sh'
     pub_lists w:. a:packages/a b:packages/b c:packages/c
     expected="$(command_with test --report-on=packages/a/lib packages/a/test \
       --report-on=packages/b/lib packages/c/test)"
+    When run script "${script}"
+    The output should equal "${expected}"
+  End
+
+  It 'tests a workspace whose root has no test folder of its own'
+    package w .
+    package a packages/a lib test
+    package b packages/b lib test
+    pub_lists w:. a:packages/a b:packages/b
+    expected="$(command_with --report-on=packages/a/lib packages/a/test \
+      --report-on=packages/b/lib packages/b/test)"
     When run script "${script}"
     The output should equal "${expected}"
   End
