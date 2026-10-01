@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2154  # actions/changelog sets REPO, BRANCH, TYPE, TITLE and DRY_RUN
+# shellcheck disable=SC2154  # actions/changelog sets what this reads
 set -euo pipefail
 
 path="$(git rev-parse --show-prefix)CHANGELOG.md"

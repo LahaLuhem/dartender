@@ -4,7 +4,6 @@ Describe 'ci/sem-label.sh'
   check="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/sem-label.sh"
   export REPO=owner/repo PR=7
 
-  # Stands in for the API, answering only the call for this PR's labels.
   Mock gh
     if [[ "$*" != "api repos/${REPO}/pulls/${PR} --jq .labels[].name" ]]; then
       echo "unexpected call: gh $*" >&2

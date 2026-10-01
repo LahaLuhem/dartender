@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Sets a package repo's ruleset, sem-* labels and merge settings, with gh logged in as its admin.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
@@ -19,7 +18,6 @@ same='. as $got | $want == ($want | with_entries(.value = $got[.key]))'
 body="$(< "${here}/protected.example.json")"
 name="$(jq -r .name <<< "${body}")"
 
-# For when the API won't take the ruleset, like with a token that can't manage rulesets.
 by_hand() {
   error "Couldn't set the ruleset. Import ${here}/protected.example.json under Settings → Rules," \
     "then make sure it kept the admin bypass."
@@ -43,8 +41,8 @@ else
   fi
 fi
 
-# The sem-* labels that are missing or differ, ignoring the cider type, which GitHub doesn't keep.
 have="$(gh api --paginate "repos/${repo}/labels")"
+# Without the cider type, which GitHub doesn't keep.
 todo="$(jq -n -r --slurpfile want "${here}/../sem-labels.json" '
   [inputs[] | {name, color, description}] as $have
   | $want[0][] | {name, color, description} | select(IN($have[]) | not)

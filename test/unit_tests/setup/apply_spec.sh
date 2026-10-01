@@ -6,19 +6,16 @@ Describe 'setup/apply.sh'
   apply="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/apply.sh"
   example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json"
   labels="${SHELLSPEC_PROJECT_ROOT}/scripts/sem-labels.json"
-  # The example ruleset, the way GitHub lists a repo's rulesets.
   ours="$(jq -c '[{id: 42, name: .name}]' "${example}")"
 
   BeforeEach 'fresh_gh'
 
-  # Whether the JSON on stdin says the same as the file $1, whatever the formatting.
   same_json_as() {
     jq -S . > "${dir}/sent.json"
     jq -S . "$1" > "${dir}/want.json"
     cmp -s "${dir}/sent.json" "${dir}/want.json"
   }
 
-  # Labels in sem-labels.json that no `gh label create <name> ... --force` call set up.
   unset_labels() {
     local names name
     grep -q '^label create ' "${CALLS}" || echo 'no label was set up at all'
@@ -86,7 +83,6 @@ Describe 'setup/apply.sh'
   End
 
   It 'rewrites only the labels that are missing or differ'
-    # sem-add in another colour, and no sem-skip at all.
     LABELS="$(jq -c 'map(select(.name != "sem-skip") | {name, color, description}
       | if .name == "sem-add" then .color = "000000" else . end | . + {id: 1})' "${labels}")"
     export LABELS

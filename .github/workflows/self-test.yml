@@ -16,7 +16,6 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Dartender checks itself with the same workflow every package repo calls.
   ci:
     uses: ./.github/workflows/ci.yml
     # What ci.yml's Auto-merge job asks for. A run whose caller grants less won't start.
@@ -24,7 +23,7 @@ jobs:
       contents: write
       pull-requests: write
 
-  # And against packages laid out like the real repos, since dartender itself has no pubspec.
+  # Dartender has no pubspec, so the package jobs only run against these.
   fixtures:
     strategy:
       fail-fast: false
@@ -42,7 +41,6 @@ jobs:
       # Low, so the Python fixture's pytest runs with the gate on.
       python-min-coverage: 1
 
-  # Publishing as well, all but the upload, which only a real release can test.
   publish:
     strategy:
       fail-fast: false
@@ -55,10 +53,9 @@ jobs:
       id-token: write
     with:
       working-directory: test/workflow_tests/${{ matrix.fixture }}
+      # Only a real release can test the upload.
       dry-run: true
 
-  # The changelog line too, all but the commit. One fixture is enough, since cider doesn't care
-  # what kind of package it's in.
   changelog:
     uses: ./.github/workflows/changelog.yml
     # What changelog.yml's jobs ask for.
@@ -66,6 +63,7 @@ jobs:
       contents: read
       pull-requests: read
     with:
+      # One fixture, since cider doesn't care what kind of package it's in.
       working-directory: test/workflow_tests/dart_package
       dry-run: true
       # Stand-ins for a merged PR's, since dartender's own PRs carry no sem-* label.

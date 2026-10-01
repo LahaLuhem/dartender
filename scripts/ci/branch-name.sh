@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2154  # actions/branch-name sets BRANCH
+# shellcheck disable=SC2154  # actions/branch-name sets what this reads
 set -euo pipefail
 pattern='^(feature|bugfix|chore|refactor)/#[0-9]+-.+$'
 

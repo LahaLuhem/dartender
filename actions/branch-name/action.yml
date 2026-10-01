@@ -12,5 +12,4 @@ runs:
     - shell: bash
       env:
         BRANCH: ${{ inputs.branch }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/branch-name.sh"'

@@ -1,5 +1,3 @@
-# Dartender's own changelog, for `git cliff`. Package repos write theirs one PR at a time.
-
 [changelog]
 header = "# Changelog\n\n"
 # The `<!-- n -->` prefixes only keep Keep a Changelog's section order, and striptags hides them.

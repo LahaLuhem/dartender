@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2154  # actions/sem-label sets REPO and PR
+# shellcheck disable=SC2154  # actions/sem-label sets what this reads
 set -euo pipefail
 names="$(jq -r '.[].name' "$(dirname "${BASH_SOURCE[0]}")/../sem-labels.json")"
 mapfile -t allowed <<< "${names}"

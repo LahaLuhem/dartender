@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Tests every package in one very_good run from the root, gated on their combined coverage, so a
-# suite that covers another package's code counts there.
-# shellcheck disable=SC2154  # actions/test sets FLUTTER, MIN_COVERAGE and EXCLUDES
+# shellcheck disable=SC2154  # actions/test sets what this reads
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 
 packages="$("${here}/packages.sh")"
 paths=()
+# One run over every package, so a suite that covers another package's code counts there.
 while IFS=$'\t' read -r _ dir _; do
   lib="${dir}/lib" tests="${dir}/test"
   if [[ -d "${lib}" ]]; then paths+=("--report-on=${lib#./}"); fi

@@ -6,13 +6,11 @@ Describe 'ci/changelog-type.sh'
   export REPO=owner/repo SHA=acfd6e34b152ddafe5168cf760c7e9dbbba7a116 LABEL='' TITLE=''
   another_commit=0000000000000000000000000000000000000000
 
-  # A PR the way commits/<sha>/pulls lists one, cut down to the fields the script reads.
   pull() {
     jq -n --argjson number "$1" --arg sha "$2" --arg login "$3" --arg title "${4:-Add a thing}" \
       '{number: $number, title: $title, merge_commit_sha: $sha, user: {login: $login}}'
   }
 
-  # Answers for the commit's PRs, and for #7's labels the way sem-label.sh asks for them.
   Mock gh
     case "$*" in
       "api repos/${REPO}/commits/${SHA}/pulls") printf '%s\n' "${PULLS}" ;;

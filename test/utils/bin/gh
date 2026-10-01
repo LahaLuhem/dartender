@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Stands in for gh in the specs, set up by fresh_gh in test/utils/gh.sh. Logs `api <method> <path>`
-# whatever the flag order, keeps sent bodies, answers reads, and fails a call matching ${FAIL_ON}.
 # shellcheck disable=SC2154  # fresh_gh exports what this reads
 method=GET path='' prev=''
 for arg; do

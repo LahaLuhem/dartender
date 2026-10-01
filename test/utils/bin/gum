@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Stands in for gum in the specs, set up by fresh_gh in test/utils/gh.sh. Logs each call and answers
-# like Enter, unless it matches ${ABORT_ON} (ctrl+c), ${ACCEPT_ON}, ${DECLINE_ON} or ${TYPE_ON},
-# which types ${TYPED}.
 # shellcheck disable=SC2154  # fresh_gh exports what this reads
 echo "gum $*" >> "${CALLS}"
 if [[ -n ${ABORT_ON} && "$*" == *"${ABORT_ON}"* ]]; then exit 130; fi
@@ -17,4 +14,5 @@ if [[ $1 == input ]]; then
 fi
 if [[ -n ${ACCEPT_ON} && "$*" == *"${ACCEPT_ON}"* ]]; then exit 0; fi
 if [[ -n ${DECLINE_ON} && "$*" == *"${DECLINE_ON}"* ]]; then exit 1; fi
+# Otherwise Enter, which takes the default.
 if [[ " $* " == *" --default=false "* ]]; then exit 1; fi

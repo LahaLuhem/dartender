@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Prints what ci.yml needs to know about a package, as key=value lines for $GITHUB_OUTPUT.
 set -euo pipefail
 cd "${1:-.}"
 
 manifest=.github/lint-checks.json
-# No checks, or a check with no command, would lint nothing and still pass, so both fail here.
+# No checks, or a check with no command, would lint nothing and still pass.
 valid='.image and (.checks | length > 0) and all(.checks[];
   (.name | type == "string" and length > 0) and (.cmd | type == "string" and test("\\S")))'
 if ! jq -e "${valid}" "${manifest}" >/dev/null 2>&1; then
@@ -86,7 +85,6 @@ dependabot="$(jq -R -n -c '[inputs | select(. != "")] | unique
   | map(split("\t") | {"package-ecosystem": .[0], directory: .[1]})' <<< "${watched}")"
 echo "dependabot=${dependabot}"
 
-# Only Actions has a summary page, so a run anywhere else skips it.
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   names="$(jq -r '[.[].name] | join(", ")' <<< "${checks}")"
   watching="$(jq -r 'map("`\(."package-ecosystem") \(.directory)`") | join(", ")' \

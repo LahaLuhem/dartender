@@ -3,7 +3,6 @@
 Describe 'ci/commit-conventions.sh'
   check="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/commit-conventions.sh"
 
-  # A repo with one commit on main, which is where the pull request starts.
   pull_request() {
     repo="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
     cd "${repo}" || return
@@ -15,7 +14,6 @@ Describe 'ci/commit-conventions.sh'
     export BASE_SHA PR_BODY='Does a thing.'
   }
 
-  # Moves the pull request's end to HEAD.
   head_here() {
     HEAD_SHA="$(git rev-parse HEAD)"
     export HEAD_SHA

@@ -26,5 +26,4 @@ runs:
         FLUTTER: ${{ inputs.flutter }}
         MIN_COVERAGE: ${{ inputs.min-coverage }}
         EXCLUDES: ${{ inputs.excludes }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/test.sh"'

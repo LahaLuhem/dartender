@@ -18,5 +18,4 @@ runs:
         PR: ${{ inputs.pr }}
         # gh won't call the API without a token, even for public repos.
         GH_TOKEN: ${{ github.token }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/sem-label.sh"'

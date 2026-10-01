@@ -37,5 +37,4 @@ runs:
         TITLE: ${{ inputs.title }}
         DRY_RUN: ${{ inputs.dry-run }}
         GH_TOKEN: ${{ inputs.token }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/changelog.sh"'

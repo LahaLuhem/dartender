@@ -10,7 +10,6 @@ Describe 'ci/packages.sh'
   }
   BeforeEach 'setup'
 
-  # A pubspec for the package $1 in the folder $2, with the lines $3 after its name.
   pubspec() {
     mkdir -p "${repo}/$2"
     printf 'name: %s\n%s' "$1" "${3-}" > "${repo}/$2/pubspec.yaml"

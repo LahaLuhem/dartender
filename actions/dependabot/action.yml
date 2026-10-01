@@ -16,5 +16,4 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         PAIRS: ${{ inputs.pairs }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/dependabot.sh"'

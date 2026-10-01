@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Stands in for dart in the specs, set up by pub_lists in test/utils/pub.sh. Answers
-# `dart pub workspace list --json` the way pub does, by resolved path, and fails any other call.
-# shellcheck disable=SC2154  # pub_lists exports LISTED and PUB_FAILS
+# shellcheck disable=SC2154  # pub_lists and pub_fails export what this reads
 if [[ "$*" != 'pub workspace list --json' ]]; then
   echo "The dart stand-in only lists packages, not: dart $*" >&2
   exit 1
@@ -10,6 +8,7 @@ if [[ -n ${PUB_FAILS} ]]; then
   echo "${PUB_FAILS}" >&2
   exit 66
 fi
+# pub prints resolved paths.
 root="$(pwd -P)"
 jq -n --arg root "${root}" --arg listed "${LISTED}" '{packages: [$listed | split(" ")[]
   | split(":") | {name: .[0], path: (if .[1] == "." then $root else "\($root)/\(.[1])" end)}]}'

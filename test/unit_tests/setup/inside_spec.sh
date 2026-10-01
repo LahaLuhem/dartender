@@ -19,7 +19,6 @@ Describe 'setup/inside.sh'
     stat -c %Y "${r}/.github/dependabot.yml"
   }
 
-  # The calls that change something on GitHub.
   writes() {
     grep -vE '^(api GET |repo view |gum |mason )' "${CALLS}" || :
   }
@@ -42,7 +41,6 @@ Describe 'setup/inside.sh'
       "${SHELLSPEC_PROJECT_ROOT}/.github/workflows/ci.yml"
   }
 
-  # Gives owner/repo the example ruleset, requiring exactly the checks named.
   # shellcheck disable=SC2016  # jq programs, whose $ARGS and $checks are jq variables
   ruleset_with() {
     local example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json" checks
@@ -194,7 +192,7 @@ Describe 'setup/inside.sh'
   End
 
   Describe "the ci caller's inputs"
-    # Gives the repo in r a ci caller whose inputs all differ from ci.yml's defaults.
+    # Every input differs from ci.yml's default, so a question starting from the default shows.
     with_caller() {
       local caller
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
@@ -306,7 +304,6 @@ Describe 'setup/inside.sh'
   End
 
   Describe 'the shell scripts for ShellCheck'
-    # A lint manifest whose ShellCheck check runs on $1.
     checking() {
       printf '{"image":"img","checks":[{"name":"ShellCheck","cmd":"shellcheck %s"}]}' "$1"
     }

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# What setup.sh runs in its container: the repo's callers, dependabot.yml and GitHub settings.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"
@@ -9,8 +8,7 @@ usage() {
   exit 2
 }
 
-# Sets answer to true or false, with $2 as the default (true when left out) that -y takes. A plain
-# call rather than an if condition, so set -e holds inside it.
+# Sets answer rather than returning a status, since set -e doesn't hold inside an if condition.
 ask() {
   answer="${2:-true}"
   if [[ ${yes} == true ]]; then return; fi
@@ -22,14 +20,12 @@ ask() {
   if [[ ${rc} -eq 1 ]]; then answer=false; fi
 }
 
-# Sets answer to what gets typed for $1, starting from $2, which -y takes as it is.
 ask_for() {
   answer="$2"
   if [[ ${yes} == true ]]; then return; fi
   answer="$(gum input --header "$1" --value "$2")"
 }
 
-# Like ask_for, but stops at anything that isn't a number, calling it $3 in the error.
 ask_number() {
   ask_for "$1" "$2"
   # Neither gum nor mason checks it's a number.
@@ -39,7 +35,6 @@ ask_number() {
   fi
 }
 
-# What the repo's ci caller passes for the input $1 now, or else ci.yml's own default for it.
 caller_value() {
   local caller=.github/workflows/ci.yml has=false
   export INPUT="$1"
@@ -54,13 +49,12 @@ caller_value() {
   fi
 }
 
-# The scripts the repo's lint-checks.json has ShellCheck check now. A repo without one yet gets
-# scripts/*.sh when that finds any, since ShellCheck fails on a glob that finds nothing.
 shellcheck_paths() {
   local manifest=.github/lint-checks.json
   if [[ -f ${manifest} ]]; then
     jq -r '.checks[] | select(.name == "ShellCheck") | .cmd | sub("^shellcheck\\s*"; "")' \
       "${manifest}"
+  # ShellCheck fails on a glob that finds nothing.
   elif compgen -G 'scripts/*.sh' > /dev/null; then
     echo 'scripts/*.sh'
   fi

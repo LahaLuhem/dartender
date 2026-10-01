@@ -5,7 +5,6 @@ Describe 'ci/changelog.sh'
   # shellcheck disable=SC2016  # a title holding backticks and a dollar sign, as typed
   export REPO=owner/repo BRANCH=master TYPE=added TITLE='Add `putAll` for $HOME' DRY_RUN=false
 
-  # A checkout whose last commit holds a CHANGELOG.md in the folder $1, which the job runs in.
   checkout() {
     local root
     root="$(mktemp -d "${SHELLSPEC_TMPBASE}/checkout.XXXXXX")"
@@ -26,13 +25,11 @@ Describe 'ci/changelog.sh'
   }
   BeforeEach 'setup'
 
-  # Adds a line to CHANGELOG.md the way cider would, and keeps what it was called with.
   Mock cider
     printf '%s\n' "$@" > "${ARGS}"
     printf -- '- %s\n' "$3" >> CHANGELOG.md
   End
 
-  # Keeps what gets sent, and answers with the new commit's URL.
   Mock gh
     echo "gh $*" >> "${CALLS}"
     cat > "${SENT}"
@@ -42,7 +39,6 @@ Describe 'ci/changelog.sh'
   sent_sha() { jq -r .sha "${SENT}"; }
   sent_branch() { jq -r .branch "${SENT}"; }
   sent_message() { jq -r .message "${SENT}"; }
-  # Whether the body on stdin carries CHANGELOG.md as it is now.
   carries_the_file() {
     jq -j '.content | @base64d' > "${SENT}.content"
     cmp -s "${SENT}.content" CHANGELOG.md

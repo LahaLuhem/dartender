@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Fails on any `with:` key that the action or reusable workflow behind `uses:` doesn't declare. The
-# runner only warns about those, so a renamed input would quietly fall back to its default.
 set -euo pipefail
 shopt -s nullglob
 cd "${1:-.}"
@@ -8,8 +6,6 @@ cd "${1:-.}"
 cache="$(mktemp -d)"
 trap 'rm -rf "${cache}"' EXIT
 
-# Prints what `uses` $1 points at, a reusable workflow or an action's metadata, or nothing when
-# that can't be read.
 metadata() {
   local uses="$1" repo="" ref="" path candidate content
   case "${uses}" in
@@ -28,7 +24,7 @@ metadata() {
   esac
 
   local candidates=("${path}")
-  # Some actions ship action.yaml instead of action.yml, bats-core/bats-action for one.
+  # Some actions ship action.yaml instead of action.yml.
   if [[ "${path}" != *.yml && "${path}" != *.yaml ]]; then
     candidates=("${path:+${path}/}action.yml" "${path:+${path}/}action.yaml")
   fi
@@ -87,6 +83,7 @@ for file in .github/workflows/*.{yml,yaml} .github/actions/*/action.{yml,yaml} \
     keys="$(jq -r '.keys[] | [.key, .line] | @tsv' <<< "${call}")"
     while IFS=$'\t' read -r key line; do
       if [[ -z "${known[${key}]:-}" ]]; then
+        # The runner only warns, so a renamed input would quietly fall back to its default.
         echo "::error file=${file},line=${line}::\"${key}\" isn't an input of ${uses}." \
           "It takes: ${takes:-nothing}."
         failed=1

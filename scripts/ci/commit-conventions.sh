@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2154  # actions/commit-conventions sets PR_BODY, BASE_SHA and HEAD_SHA
+# shellcheck disable=SC2154  # actions/commit-conventions sets what this reads
 set -euo pipefail
 range="${BASE_SHA}..${HEAD_SHA}"
 max=82
