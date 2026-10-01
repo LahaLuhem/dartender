@@ -1,0 +1,25 @@
+name: Tag package
+description: Finds the folder of the package a tag publishes.
+
+inputs:
+  tag:
+    description: The pushed tag.
+    required: true
+  working-directory:
+    description: Folder of the repo's root.
+    default: .
+
+outputs:
+  folder:
+    description: The package's folder, from the repo's root.
+    value: ${{ steps.package.outputs.folder }}
+
+runs:
+  using: composite
+  steps:
+    - id: package
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        TAG: ${{ inputs.tag }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/tag-package.sh" >> "$GITHUB_OUTPUT"'
