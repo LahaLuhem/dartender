@@ -1,0 +1,30 @@
+name: Test
+description: Tests every package in one very_good run, gated on their combined coverage.
+
+inputs:
+  flutter:
+    description: Whether the package depends on the Flutter SDK, true or false.
+    required: true
+  min-coverage:
+    description: The lowest line coverage that passes, in percent.
+    required: true
+  excludes:
+    description: Space-separated globs to leave out of coverage, matched from the root.
+    required: true
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: dart pub global activate very_good_cli
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        FLUTTER: ${{ inputs.flutter }}
+        MIN_COVERAGE: ${{ inputs.min-coverage }}
+        EXCLUDES: ${{ inputs.excludes }}
+      # The whole repo comes down with the action, so this reaches dartender's scripts/.
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/test.sh"'

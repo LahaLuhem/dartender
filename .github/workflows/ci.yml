@@ -165,10 +165,6 @@ jobs:
     needs: plan
     if: needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
-    env:
-      MIN_COVERAGE: ${{ inputs.min-coverage }}
-      # Generated code has nothing to test, so it never counts.
-      EXCLUDES: "**/*.g.dart ${{ inputs.coverage-excludes }}"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -176,20 +172,13 @@ jobs:
       - uses: $/actions/setup-flutter
         with:
           working-directory: ${{ inputs.working-directory }}
-      - run: dart pub global activate very_good_cli
-      # --no-optimization runs the test files as written, instead of merged into one.
-      - if: needs.plan.outputs.flutter == 'true'
-        working-directory: ${{ inputs.working-directory }}
-        run: >-
-          very_good test --coverage --min-coverage "$MIN_COVERAGE"
-          --exclude-coverage "$EXCLUDES" --collect-coverage-from imports
-          --no-optimization
-      - if: needs.plan.outputs.flutter != 'true'
-        working-directory: ${{ inputs.working-directory }}
-        run: >-
-          very_good dart test --coverage --min-coverage "$MIN_COVERAGE"
-          --exclude-coverage "$EXCLUDES" --collect-coverage-from imports
-          --check-ignore --no-optimization
+      - uses: $/actions/test
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          flutter: ${{ needs.plan.outputs.flutter }}
+          min-coverage: ${{ inputs.min-coverage }}
+          # Generated code has nothing to test, so it never counts.
+          excludes: "**/*.g.dart ${{ inputs.coverage-excludes }}"
       # Also after a failed gate, so Coveralls shows the drop. An outage only turns this step red.
       - if: ${{ !cancelled() && inputs.coveralls }}
         continue-on-error: true
