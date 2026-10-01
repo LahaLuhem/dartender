@@ -50,7 +50,6 @@ Describe 'detect.sh'
         'a Gradle build' 'example/android/settings.gradle.kts' 'gradle /example/android'
         'a Groovy Gradle build' 'android/settings.gradle' 'gradle /android'
         'a uv project' 'tools/python/uv.lock' 'uv /tools/python'
-        'a Swift package' 'ios/a/Package.swift' 'swift /ios/a'
         'a workflow' '.github/workflows/ci.yml' 'github-actions /'
         'a workflow in a .yaml file' '.github/workflows/ci.yaml' 'github-actions /'
       End
@@ -63,38 +62,12 @@ Describe 'detect.sh'
       End
     End
 
-    Describe "a Flutter plugin's own Swift package"
-      Parameters
-        'iOS' 'ios'
-        'macOS' 'macos'
-        "iOS and macOS's shared source" 'darwin'
-      End
-
-      It "is left out for $1, since Flutter makes its FlutterFramework at build time"
-        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
-        track "${r}" pubspec.yaml \
-          $'name: a\nflutter:\n  plugin:\n    platforms:\n      ios:\n        pluginClass: APlugin\n'
-        track "${r}" "$2/a/Package.swift"
-        When run script scripts/detect.sh "${r}"
-        The output should satisfy watches 'pub /'
-      End
-    End
-
-    It "leaves out a Flutter plugin's own Swift package in a subfolder too"
+    It 'leaves out Swift packages, since no repo has one Dependabot can update'
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
-      track "${r}" packages/a/pubspec.yaml \
-        $'name: a\nflutter:\n  plugin:\n    platforms:\n      ios:\n        pluginClass: APlugin\n'
-      track "${r}" packages/a/ios/a/Package.swift
-      When run script scripts/detect.sh "${r}"
-      The output should satisfy watches 'pub /packages/a'
-    End
-
-    It "still watches a Swift package in a Flutter app's ios folder"
-      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
-      track "${r}" pubspec.yaml $'name: a\nflutter:\n  uses-material-design: true\n'
+      track "${r}" pubspec.yaml $'name: a\n'
       track "${r}" ios/a/Package.swift
       When run script scripts/detect.sh "${r}"
-      The output should satisfy watches 'pub /' 'swift /ios/a'
+      The output should satisfy watches 'pub /'
     End
 
     It "leaves out a workspace member's pubspec, since pub only updates a workspace from its root"
