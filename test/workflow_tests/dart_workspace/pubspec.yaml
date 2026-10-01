@@ -1,0 +1,12 @@
+name: dart_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.4
+
+workspace:
+  - packages/dart_workspace_a
+  - packages/dart_workspace_b
+
+dev_dependencies:
+  dependency_validator: ^5.1.0
