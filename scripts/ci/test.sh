@@ -15,6 +15,8 @@ done <<< "${packages}"
 
 command=(very_good dart test --check-ignore)
 if [[ "${FLUTTER}" == true ]]; then command=(very_good test); fi
+# very_good passes without testing anything when the folder it starts in has no test folder.
+mkdir -p test
 # --no-optimization runs the test files as written, instead of merged into one.
 exec "${command[@]}" --coverage --min-coverage "${MIN_COVERAGE}" --exclude-coverage "${EXCLUDES}" \
   --collect-coverage-from imports --no-optimization "${paths[@]}"
