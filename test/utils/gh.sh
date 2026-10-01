@@ -1,7 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
 
-# Puts the stand-ins first on PATH, with a fresh log and owner/repo set up with nothing.
 fresh_gh() {
   dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/gh.XXXXXX")"
   export PATH="${SHELLSPEC_PROJECT_ROOT}/test/utils/bin:${PATH}" CALLS="${dir}/calls" \
@@ -11,8 +10,7 @@ fresh_gh() {
   : > "${CALLS}"
 }
 
-# Gives owner/repo the example ruleset, the sem-* labels and the merge settings the way GitHub
-# hands them back, with fields of its own added and the labels' cider types left out.
+# The way GitHub hands them back, with fields of its own added and no cider types.
 already_set_up() {
   local example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json"
   RULESET="$(jq -c '. + {id: 42, node_id: "RRS_1", source: "owner/repo", _links: {}}' "${example}")"

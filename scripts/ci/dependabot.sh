@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Fails on each pair from detect.sh that no block in the repo's dependabot.yml watches.
-# shellcheck disable=SC2154  # actions/dependabot sets PAIRS
+# shellcheck disable=SC2154  # actions/dependabot sets what this reads
 set -euo pipefail
 # Dependabot matches `directories` globs against the folders in its checkout, dotfolders included.
 shopt -s dotglob

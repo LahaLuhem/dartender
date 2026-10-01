@@ -13,7 +13,6 @@ Describe 'setup/callers.sh'
     grep '^mason make ' "${CALLS}" || :
   }
 
-  # Whether the log on stdin has mason adding a folder that holds dartender's callers brick.
   adds_the_brick() {
     local path
     path="$(sed -n 's/^mason add -g callers --path //p')"

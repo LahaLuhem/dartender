@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Prints the repo's packages, root first, as tab-separated `<name> <folder> <publishes>` lines,
-# folders relative to the root.
 set -euo pipefail
 cd "${1:-.}"
 

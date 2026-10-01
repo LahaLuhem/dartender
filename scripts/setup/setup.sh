@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Sets up the package repo it runs in, from a container that brings every tool the setup needs.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"

@@ -3,7 +3,6 @@
 Describe 'ci/dependabot.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/dependabot.sh"
 
-  # A throwaway package folder whose .github/$2, dependabot.yml by default, holds $1.
   package() {
     dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/package.XXXXXX")"
     mkdir "${dir}/.github"
@@ -49,14 +48,12 @@ Describe 'ci/dependabot.sh'
     The status should be success
   End
 
-  # With a block that has $1, and the folder $2 there to match a glob.
   block() {
     p="$(package "{\"version\": 2, \"updates\": [{\"package-ecosystem\": \"pub\", $1}]}")"
     mkdir -p "${p}/$2"
     export PAIRS="[{\"package-ecosystem\": \"pub\", \"directory\": \"/$2\"}]"
   }
 
-  # The way Dependabot reads them, matching globs against the folders there.
   Describe 'the folders a block covers'
     Parameters
       'example' '"directories": ["/example"]'

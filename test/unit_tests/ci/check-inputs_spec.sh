@@ -3,7 +3,6 @@
 Describe 'ci/check-inputs.sh'
   check_inputs="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/check-inputs.sh"
 
-  # A package repo to check, and a folder the stand-in for GitHub below serves other repos from.
   package() {
     repo="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
     export REMOTE="${repo}.remote"
@@ -11,14 +10,13 @@ Describe 'ci/check-inputs.sh'
     cd "${repo}" || return
   }
 
-  # Saves $4 as the file $2 of the remote repo $1, at ref $3.
   remote() {
     local file="${REMOTE}/$1/$3/$2"
     mkdir -p "${file%/*}"
     printf '%s\n' "$4" > "${file}"
   }
 
-  # A workflow whose one step uses $1 and passes it the keys after that. The second key is line 9.
+  # The second key lands on line 9, which the errors below name.
   step() {
     local key
     printf 'on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n' > .github/workflows/ci.yml
@@ -27,7 +25,6 @@ Describe 'ci/check-inputs.sh'
     for key; do printf '          %s: x\n' "${key}" >> .github/workflows/ci.yml; done
   }
 
-  # A workflow whose one job calls the reusable workflow $1 with the keys after that.
   job() {
     local key
     printf 'on: push\njobs:\n  a:\n    uses: %s\n    with:\n' "$1" > .github/workflows/ci.yml
@@ -35,8 +32,6 @@ Describe 'ci/check-inputs.sh'
     for key; do printf '      %s: x\n' "${key}" >> .github/workflows/ci.yml; done
   }
 
-  # Stands in for `gh api repos/<owner>/<repo>/contents/<path>?ref=<ref>`, serving the raw file
-  # from ${REMOTE}/<owner>/<repo>/<ref>/<path>.
   Mock gh
     for arg; do
       case "${arg}" in repos/*) url="${arg#repos/}" ;; *) ;; esac

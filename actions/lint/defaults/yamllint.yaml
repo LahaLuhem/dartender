@@ -1,4 +1,3 @@
-# Shared YAML rules for the package repos. A repo can bring its own .yamllint.yaml instead.
 extends: default
 
 # Written by Flutter's DevTools, not kept by hand.

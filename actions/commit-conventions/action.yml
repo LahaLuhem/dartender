@@ -20,5 +20,4 @@ runs:
         PR_BODY: ${{ inputs.body }}
         BASE_SHA: ${{ inputs.base }}
         HEAD_SHA: ${{ inputs.head }}
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/commit-conventions.sh"'

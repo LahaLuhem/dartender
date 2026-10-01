@@ -1,5 +1,3 @@
-# Shared Markdown rules for the package repos. A repo can bring its own .rumdl.toml instead.
-
 [global]
 # Written by tools or generated, not kept by hand.
 exclude = [

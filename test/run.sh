@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# CI runs this too, so a local run and a CI run can't drift apart.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # From stdin, so Docker isn't sent the fixture packages and whatever builds sit in them.

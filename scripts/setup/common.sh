@@ -1,5 +1,4 @@
 # shellcheck shell=bash
-# Sourced by the scripts next to it, for one way of saying things and one bash to count on.
 
 info() { echo "🔔 $*"; }
 success() { echo "✔️ $*"; }

@@ -3,7 +3,6 @@
 Describe 'ci/lint.sh'
   lint="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/lint.sh"
 
-  # A bare package repo to run in, with the variables actions/lint sets.
   package() {
     repo="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
     cd "${repo}" || return
@@ -11,7 +10,6 @@ Describe 'ci/lint.sh'
     export DEFAULTS="${SHELLSPEC_PROJECT_ROOT}/actions/lint/defaults"
   }
 
-  # Stands in for the image, printing what it was asked to run, one argument per line.
   Mock docker
     printf '%s\n' "$@"
   End

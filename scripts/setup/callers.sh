@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Writes a package repo's caller workflows and lint-checks.json from dartender's brick, for its admin
-# to commit.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"

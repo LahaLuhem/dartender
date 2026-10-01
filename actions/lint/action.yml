@@ -21,5 +21,4 @@ runs:
         LINT_CMD: ${{ inputs.cmd }}
         LINTERPOL_IMAGE: ${{ inputs.image }}
         DEFAULTS: ${{ github.action_path }}/defaults
-      # The whole repo comes down with the action, so this reaches dartender's scripts/.
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/lint.sh"'

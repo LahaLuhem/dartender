@@ -6,14 +6,11 @@ Describe 'setup/dependabot.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/dependabot.sh"
   manifest='{"image":"img","checks":[{"name":"a","cmd":"a"}]}'
 
-  # The blocks in ${r}'s dependabot.yml, one `<package-ecosystem> <directory>` each, sorted.
   blocks() {
     yq '[.updates[] | ."package-ecosystem" + " " + .directory] | sort | .[]' \
       "${r}/.github/dependabot.yml"
   }
 
-  # Blocks whose only group isn't named after their ecosystem, or doesn't take the minors and
-  # patches of every dependency and nothing else.
   misgrouped() {
     local updates
     updates="$(yq -o json '.updates' "${r}/.github/dependabot.yml")"

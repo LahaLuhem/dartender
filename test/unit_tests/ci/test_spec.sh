@@ -12,7 +12,6 @@ Describe 'ci/test.sh'
   }
   BeforeEach 'setup'
 
-  # A package named $1 in the folder $2, with the folders after that, like lib and test.
   package() {
     local name="$1" dir="$2" folder
     shift 2
@@ -21,7 +20,6 @@ Describe 'ci/test.sh'
     for folder in "$@"; do mkdir -p "${dir}/${folder}"; done
   }
 
-  # The very_good command for $FLUTTER, with the gate's flags, then the arguments given.
   command_with() {
     if [[ ${FLUTTER} == true ]]; then
       printf '%s\n' test
@@ -32,9 +30,8 @@ Describe 'ci/test.sh'
       --collect-coverage-from imports --no-optimization "$@"
   }
 
-  # Prints what very_good was asked to run, one argument per line. Like the real one, it skips the
-  # run as a pass when the folder it starts in has no test folder.
   Mock very_good
+    # Like the real one, it skips the run as a pass when its folder has no test folder.
     if [[ -d test ]]; then printf '%s\n' "$@"; else echo 'No test folder found in .'; fi
   End
 

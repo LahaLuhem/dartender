@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Writes a package repo's .github/dependabot.yml from what detect.sh finds, for its admin to commit.
 set -euo pipefail
 here="$(dirname "${BASH_SOURCE[0]}")"
 source "${here}/common.sh"

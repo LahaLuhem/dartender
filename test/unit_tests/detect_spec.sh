@@ -33,8 +33,6 @@ Describe 'detect.sh'
   End
 
   Describe 'what Dependabot has to watch'
-    # Whether the dependabot line on stdin lists exactly these `<package-ecosystem> <directory>`
-    # pairs, in any order.
     watches() {
       local line actual want
       line="$(grep '^dependabot=')" || return 1
