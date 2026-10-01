@@ -56,7 +56,11 @@ while IFS= read -r file; do
     # Test fixtures, not real dependencies.
     */test/*) ;;
     /.github/workflows/*.yml | /.github/workflows/*.yaml) ecosystem=github-actions dir=/ ;;
-    */pubspec.yaml) ecosystem=pub ;;
+    # pub only updates a workspace from its root, which covers the members.
+    */pubspec.yaml)
+      resolution="$(yq '.resolution // ""' "${file}")"
+      if [[ "${resolution}" != workspace ]]; then ecosystem=pub; fi
+      ;;
     */settings.gradle | */settings.gradle.kts) ecosystem=gradle ;;
     */uv.lock) ecosystem=uv ;;
     # A Flutter plugin's own package needs FlutterFramework, which only exists at build time.

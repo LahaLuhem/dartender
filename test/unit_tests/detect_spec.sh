@@ -99,6 +99,14 @@ Describe 'detect.sh'
       The output should satisfy watches 'pub /' 'swift /ios/a'
     End
 
+    It "leaves out a workspace member's pubspec, since pub only updates a workspace from its root"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\nworkspace:\n  - packages/b\n'
+      track "${r}" packages/b/pubspec.yaml $'name: b\nresolution: workspace\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy watches 'pub /'
+    End
+
     It 'watches each composite action in its own folder'
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
       track "${r}" .github/actions/a/action.yml $'runs:\n  using: composite\n  steps: []\n'
