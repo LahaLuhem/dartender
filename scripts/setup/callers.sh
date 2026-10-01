@@ -14,15 +14,17 @@ coveralls="$1" min_coverage="$2" coverage_excludes="$3" python_min_coverage="$4"
 shellcheck_paths="$5" repo="${6:-.}"
 branch="$(git -C "${repo}" symbolic-ref --short refs/remotes/origin/HEAD)"
 branch="${branch#origin/}"
-# mason renders a section even for an empty string, so the brick switches ShellCheck on this.
+# mason renders a section even for an empty string, so the brick switches these on booleans.
 shellcheck=false
 if [[ ${shellcheck_paths} == *[![:space:]]* ]]; then shellcheck=true; fi
+python=false
+if [[ -n ${python_min_coverage} ]]; then python=true; fi
 
 # Global, so mason leaves no mason.yaml in the repo.
 mason add -g callers --path "${here}/../../bricks/callers" > /dev/null
 rc=0
 out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-exit-if-changed \
-  --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" \
+  --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" --python "${python}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
   --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
   2>&1)" || rc=$?
