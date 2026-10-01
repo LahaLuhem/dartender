@@ -4,9 +4,13 @@ on:
   workflow_call:
     inputs:
       working-directory:
-        description: Folder of the package to publish. Only dartender's self-tests change it.
+        description: Folder of the repo's root. Only dartender's self-tests change it.
         type: string
         default: .
+      tag:
+        description: The tag to publish from. Only dartender's self-tests set it.
+        type: string
+        default: ${{ github.ref_name }}
       dry-run:
         description: Runs everything but the upload. Only dartender's self-tests set it.
         type: boolean
@@ -36,9 +40,14 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
           pub-get: false
+      - id: package
+        uses: $/actions/tag-package
+        with:
+          tag: ${{ inputs.tag }}
+          working-directory: ${{ inputs.working-directory }}
       # Fails on warnings too, which `--force` would publish anyway.
-      - working-directory: ${{ inputs.working-directory }}
+      - working-directory: ${{ inputs.working-directory }}/${{ steps.package.outputs.folder }}
         run: dart pub publish --dry-run
       - if: ${{ !inputs.dry-run }}
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}/${{ steps.package.outputs.folder }}
         run: dart pub publish --force
