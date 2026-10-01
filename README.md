@@ -57,7 +57,7 @@ has now. Enter takes the starting answer:
 | Upload coverage to Coveralls? | What the `ci` caller passes now, or else `ci.yml`'s default |
 | The lowest line coverage that passes | The same |
 | Globs to leave out of coverage, besides generated code | The same |
-| The lowest coverage for `benchmark/python`'s tests, 0 for none | The same |
+| The lowest coverage for `benchmark/python`'s tests, 0 for none, where there's one | The same |
 | The shell scripts for ShellCheck | What ShellCheck checks now, or else `scripts/*.sh` when there's no `lint-checks.json` yet and that finds any |
 | Write `dependabot.yml`? | Yes |
 | Set the ruleset, labels and merge settings on GitHub? | Yes |

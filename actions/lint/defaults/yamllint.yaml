@@ -1,8 +1,9 @@
 extends: default
 
-# Written by Flutter's DevTools, not kept by hand.
+# DevTools writes its file, and mason templates only become YAML once rendered.
 ignore: |
   **/devtools_options.yaml
+  **/__brick__/**
 
 rules:
   # Same width as .editorconfig.

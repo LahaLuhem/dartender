@@ -41,6 +41,11 @@ Describe 'setup/inside.sh'
       "${SHELLSPEC_PROJECT_ROOT}/.github/workflows/ci.yml"
   }
 
+  has_python() {
+    # detect.sh stops on a benchmark/python without tests.
+    mkdir -p "${r}/benchmark/python/tests"
+  }
+
   # shellcheck disable=SC2016  # jq programs, whose $ARGS and $checks are jq variables
   ruleset_with() {
     local example="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/protected.example.json" checks
@@ -124,6 +129,7 @@ Describe 'setup/inside.sh'
     It "writes them first, with what the repo's ci caller passes now"
       r="$(repo "${manifest}")"
       track "${r}" pubspec.yaml
+      has_python
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
         '      python-min-coverage: 80')"
@@ -140,6 +146,7 @@ Describe 'setup/inside.sh'
     It "falls back to ci.yml's own defaults for a repo without a ci caller"
       r="$(repo "${manifest}")"
       track "${r}" pubspec.yaml
+      has_python
       coveralls="$(default_of coveralls)"
       min_coverage="$(default_of min-coverage)"
       excludes="$(default_of coverage-excludes)"
@@ -155,6 +162,7 @@ Describe 'setup/inside.sh'
     It "falls back to ci.yml's own default for an input the ci caller doesn't pass yet, quietly"
       r="$(repo "${manifest}")"
       track "${r}" pubspec.yaml
+      has_python
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
       track "${r}" .github/workflows/ci.yml "${caller}"
@@ -199,6 +207,7 @@ Describe 'setup/inside.sh'
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
         '      python-min-coverage: 80')"
       track "${r}" .github/workflows/ci.yml "${caller}"
+      has_python
     }
 
     It "starts each question from what the repo's ci caller passes now"
@@ -213,6 +222,17 @@ Describe 'setup/inside.sh'
       The result of function asked should include '--value 90'
       The result of function asked should include '--value lib/x.dart'
       The result of function asked should include '--value 80'
+    End
+
+    It "leaves out the Python coverage where there's no benchmark/python"
+      r="$(repo "${manifest}")"
+      track "${r}" pubspec.yaml
+      cd "${r}" || return
+      When run script "${script}"
+      The status should be success
+      The output should be present
+      The result of function asked should not include 'benchmark/python'
+      The result of function make_call should include '--python false '
     End
 
     Describe 'what gets typed'
@@ -267,6 +287,7 @@ Describe 'setup/inside.sh'
       It "stops before writing anything at $1 that isn't a number"
         r="$(repo "${manifest}")"
         track "${r}" pubspec.yaml
+        has_python
         export TYPE_ON="$2" TYPED='ninety'
         cd "${r}" || return
         When run script "${script}"

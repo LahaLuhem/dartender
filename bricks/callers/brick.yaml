@@ -22,6 +22,9 @@ vars:
   python_min_coverage:
     type: number
     description: The python-min-coverage input of dartender's ci.yml.
+  python:
+    type: boolean
+    description: Whether the ci caller gets the python-min-coverage input.
   # Its tags in lint-checks.json sit inline, since mason leaves a blank line for a tag on its own.
   shellcheck:
     type: boolean

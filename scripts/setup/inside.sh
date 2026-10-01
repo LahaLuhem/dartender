@@ -82,10 +82,13 @@ if [[ ${answer} == true ]]; then
   ask_for "Globs to leave out of coverage besides generated code, space-separated" \
     "${coverage_excludes}"
   coverage_excludes="${answer}"
-  python_min_coverage="$(caller_value python-min-coverage)"
-  ask_number "Lowest coverage for benchmark/python's tests, in percent, 0 for none" \
-    "${python_min_coverage}" "the lowest Python coverage"
-  python_min_coverage="${answer}"
+  python_min_coverage=''
+  if [[ -d benchmark/python ]]; then
+    python_min_coverage="$(caller_value python-min-coverage)"
+    ask_number "Lowest coverage for benchmark/python's tests, in percent, 0 for none" \
+      "${python_min_coverage}" "the lowest Python coverage"
+    python_min_coverage="${answer}"
+  fi
   shellcheck="$(shellcheck_paths)"
   ask_for "Shell scripts for ShellCheck, space-separated globs, blank for none" "${shellcheck}"
   shellcheck="${answer}"

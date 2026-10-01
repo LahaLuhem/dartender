@@ -63,6 +63,22 @@ Describe 'setup/callers.sh'
     End
   End
 
+  It 'hands mason the Python coverage'
+    r="$(repo)"
+    When run script "${script}" true 95 '' 80 '' "${r}"
+    The status should be success
+    The output should be present
+    The result of function make_call should include '--python true '
+  End
+
+  It 'leaves the Python coverage out when given none'
+    r="$(repo)"
+    When run script "${script}" true 95 '' '' '' "${r}"
+    The status should be success
+    The output should be present
+    The result of function make_call should include '--python false '
+  End
+
   It 'says so when the callers are already up to date'
     r="$(repo)"
     export MASON_RC=0
