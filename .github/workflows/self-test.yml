@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fixture: [dart_package, flutter_package]
+        fixture: [dart_package, dart_workspace, flutter_package]
     uses: ./.github/workflows/ci.yml
     # Here too, though the job skips, since GitHub checks grants before any `if:`.
     permissions:
