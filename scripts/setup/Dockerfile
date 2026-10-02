@@ -1,5 +1,5 @@
 # Debian, not Alpine like the spec image: the brick needs mason, whose Dart only runs on glibc.
-FROM mikefarah/yq:4.53.6 AS yq
+FROM mikefarah/yq:4.54.1 AS yq
 FROM ghcr.io/jqlang/jq:1.8.2 AS jq
 FROM ghcr.io/charmbracelet/gum:v2.0.2 AS gum
 FROM dart:3.13.4 AS dart
