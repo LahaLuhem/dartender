@@ -3,7 +3,7 @@ so a fix lands once instead of six times. \
 A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 > [!NOTE]
-> Under construction. Workspaces are on their way.
+> Under construction.
 
 ## How it fits together
 
@@ -136,14 +136,25 @@ A package repo calls each workflow from a caller that `setup.sh` writes, with on
 
 If a caller grants less than a job asks for, the run won't start, even when that job would skip.
 
-The `publish` caller runs on tags like `1.2.3`, so set the package's tag pattern on pub.dev to
-`{{version}}`.
+The `publish` caller runs on a version tag, whose form depends on how many packages the repo
+publishes:
 
-The `changelog` caller runs on each push to the default branch. For a merged PR it adds the PR's
-title to `CHANGELOG.md`, under the section its `sem-*` label names, and `sem-skip` and Dependabot's
-PRs get none. The commit goes in with the changelog App's token, which the ruleset lets past, so
-the repo needs the App installed, its ID in an `APP_ID` variable and its private key in an
-`APP_PRIVATE_KEY` secret. The setup doesn't make those.
+| The repo publishes | Tag | Tag pattern to set on pub.dev |
+|---|---|---|
+| One package | `1.2.3` | `{{version}}` |
+| More than one | `<package>-1.2.3` | `<package>-{{version}}`, on each package |
+
+A tag in the other form fails the run, which says the form the repo takes.
+
+The `changelog` caller runs on each push to the default branch. For a merged PR, it adds the PR's
+title under the section its `sem-*` label names, in the `CHANGELOG.md` of each published package
+the PR changed. A file counts for the deepest package folder holding it, so in a repo of one
+package every PR's line goes there. `sem-skip` and Dependabot's PRs get none. A line that shouldn't
+go to every package the PR changed needs a PR per package, or a hand edit after the merge.
+
+Each `CHANGELOG.md` goes in as a commit of its own, with the changelog App's token, which the
+ruleset lets past. So the repo needs the App installed, its ID in an `APP_ID` variable and its
+private key in an `APP_PRIVATE_KEY` secret. The setup doesn't make those.
 
 The ruleset has to be in place before the `ci` caller lands. Until it requires `ci / ok`, `gh`
 merges Dependabot's PRs on the spot instead of waiting for CI. A run that says yes to GitHub takes
@@ -151,6 +162,23 @@ care of that.
 
 A repo's own workflow can use the setup actions here too, after its checkout, like
 `uses: LahaLuhem/dartender/actions/setup-flutter@main`.
+
+## Workspaces
+
+A repo can be a [pub workspace](https://dart.dev/tools/pub/workspaces) of several packages. The jobs
+get a repo's packages from pub, which lists a single package as a workspace of one, so a workspace
+needs nothing set up of its own.
+
+| What | In a workspace |
+|---|---|
+| Format, Analyze and Dependency validator | One run from the root, which covers every package |
+| Tests | One run over every package's tests, gated on their combined coverage |
+| Dartdoc | Each package that publishes |
+| Publish | The package the tag names, see [Calling it](#calling-it) |
+| Changelog | Each published package the PR changed, see [Calling it](#calling-it) |
+| `dependabot.yml` | One `pub` block, at the root, since pub only updates a workspace from there |
+
+Not covered: Flutter workspaces, and a member with an example app of its own.
 
 ## Lints
 
@@ -177,7 +205,7 @@ passes.
 | `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/publish.yml` | Publishes a package repo's tagged release to pub.dev |
-| `.github/workflows/changelog.yml` | Writes merged PRs' lines in a package repo's `CHANGELOG.md` |
+| `.github/workflows/changelog.yml` | Writes each merged PR's line in the `CHANGELOG.md` of every published package it changed |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
@@ -188,8 +216,11 @@ passes.
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or an overlong commit subject |
 | `actions/sem-label/` | Fails unless the PR has exactly one `sem-*` label, read fresh from the API |
 | `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
+| `actions/test/` | Tests every package in one very_good run, gated on their combined coverage |
+| `actions/dartdoc/` | Fails unless dart doc comes back clean for every package the repo publishes |
+| `actions/tag-package/` | Finds the folder of the package a tag publishes |
 | `actions/changelog-type/` | Finds the PR a pushed commit came from, and the changelog section its line goes under |
-| `actions/changelog/` | Adds that line with cider, and commits it through the contents API |
+| `actions/changelog/` | Adds that line with cider to each package the PR changed, and commits each through the contents API |
 | `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
 | `scripts/` | The shell the actions run, and the `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
