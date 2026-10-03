@@ -190,6 +190,15 @@ Describe 'ci/changelog.sh'
     The contents of file "${SENT}" should equal ''
   End
 
+  It "fails a dry run that reaches no package, so the self-test can't pass with no line shown"
+    workspace .
+    export NUMBER='' FILES=.github/workflows/ci.yml DRY_RUN=true
+    When run script "${script}"
+    The status should be failure
+    The error should include 'no package that publishes'
+    The file "${ARGS}" should not be exist
+  End
+
   It "takes the self-test's stand-in files instead of asking the API"
     workspace .
     export NUMBER='' FILES=packages/b/lib/b.dart

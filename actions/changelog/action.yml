@@ -30,7 +30,8 @@ inputs:
     default: ""
   dry-run:
     description: >-
-      Shows the line without committing it, true or false. Only dartender's self-test sets it.
+      Shows the line without committing it, true or false, and fails when no package gets one.
+      Only dartender's self-test sets it.
     default: "false"
 
 runs:

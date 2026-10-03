@@ -13,6 +13,11 @@ else
 fi
 packages="$("${here}/changelog-packages.sh" <<< "${files}")"
 if [[ -z ${packages} ]]; then
+  # Only the self-test dry-runs, and its stand-ins reach a package unless something broke.
+  if [[ ${DRY_RUN} == true ]]; then
+    echo "::error::The files reach no package that publishes, so the dry run shows no line." >&2
+    exit 1
+  fi
   echo "The PR changed no package that publishes, so there's no line to write." >&2
   exit 0
 fi
