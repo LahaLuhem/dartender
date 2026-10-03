@@ -63,6 +63,16 @@ Describe 'ci/check-inputs.sh'
     The line 2 of output should equal 'Calls checked: 1.'
   End
 
+  It 'names the right line in a workflow that opens with comments, like the callers'
+    package
+    remote acme/tool action.yml v1 $'inputs:\n  name: {}'
+    printf '# A header.\n\non: push\njobs:\n  a:\n    uses: acme/tool@v1\n    with:\n      nmae: x\n' \
+      > .github/workflows/ci.yml
+    When run script "${check_inputs}"
+    The status should be failure
+    The line 1 of output should start with '::error file=.github/workflows/ci.yml,line=8::'
+  End
+
   It 'falls back to action.yaml'
     package
     remote acme/tool action.yaml v1 $'inputs:\n  name: {}'

@@ -53,7 +53,8 @@ checked=0
 declare -A known
 for file in .github/workflows/*.{yml,yaml} .github/actions/*/action.{yml,yaml} \
   actions/*/action.{yml,yaml}; do
-  calls="$(yq -o=json -I=0 "${query}" "${file}")"
+  # By default yq takes a file's opening comments aside first, and its line numbers skip them.
+  calls="$(yq --header-preprocess=false -o=json -I=0 "${query}" "${file}")"
   while IFS= read -r call; do
     [[ -n "${call}" ]] || continue
     uses="$(jq -r .uses <<< "${call}")"
