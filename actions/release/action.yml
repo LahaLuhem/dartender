@@ -1,0 +1,46 @@
+name: Release
+description: >-
+  Writes Dependabot's lines, bumps and dates a release, commits it as whoever started the run, and
+  pushes commit and tag together.
+
+inputs:
+  working-directory:
+    description: Folder of the repo's root.
+    default: .
+  bump:
+    description: Which part of the version moves, major, minor or patch.
+    required: true
+  package:
+    description: The package to release, where the repo publishes more than one.
+    default: ""
+  dry-run:
+    description: Runs everything but the push, true or false.
+    default: "false"
+  dependabot-titles:
+    description: >-
+      Dependabot PR titles to write lines for instead of looking them up, one per line. Only
+      dartender's self-test sets it.
+    default: ""
+  token:
+    description: A token that can push past the default branch's rulesets, like the changelog App's.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BUMP: ${{ inputs.bump }}
+        PACKAGE: ${{ inputs.package }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        TITLES: ${{ inputs.dependabot-titles }}
+        PUSH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        BRANCH: ${{ github.event.repository.default_branch }}
+        REF: ${{ github.ref }}
+        ACTOR: ${{ github.actor }}
+        ACTOR_ID: ${{ github.actor_id }}
+        # gh won't call the API without a token, even for public repos.
+        GH_TOKEN: ${{ github.token }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/release.sh"'

@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      bump:
+        description: Which part of the version moves, major, minor or patch.
+        type: string
+        required: true
+      package:
+        description: The package to release, where the repo publishes more than one.
+        type: string
+        default: ""
+      dry-run:
+        description: Runs everything but the push, and shows the notes in the job summary.
+        type: boolean
+        default: false
+      app-id:
+        description: The changelog App's ID, which every package repo keeps as its APP_ID variable.
+        type: string
+        default: ""
+      working-directory:
+        description: Folder of the repo's root. Only dartender's self-tests change it.
+        type: string
+        default: .
+      dependabot-titles:
+        description: >-
+          Dependabot PR titles to write lines for instead of looking them up, one per line. Only
+          dartender's self-tests set it.
+        type: string
+        default: ""
+    secrets:
+      app-private-key:
+        description: The changelog App's private key, every package repo's APP_PRIVATE_KEY secret.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # Reading the PRs Dependabot's lines come from. The App's token does the pushing.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # Every commit and tag, since Dependabot's lines start from the last release's tag.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          pub-get: false
+      - run: dart pub global activate cider
+      # client-id takes the App's ID too, and app-id is deprecated.
+      - if: ${{ !inputs.dry-run }}
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.app-id }}
+          private-key: ${{ secrets.app-private-key }}
+          permission-contents: write
+      - uses: $/actions/release
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          bump: ${{ inputs.bump }}
+          package: ${{ inputs.package }}
+          dry-run: ${{ inputs.dry-run }}
+          dependabot-titles: ${{ inputs.dependabot-titles }}
+          token: ${{ steps.token.outputs.token }}
