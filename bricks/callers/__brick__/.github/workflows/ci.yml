@@ -6,6 +6,8 @@ on:
     branches: [{{{default_branch}}}]
   push:
     branches: [{{{default_branch}}}]
+  # The release caller runs it first.
+  workflow_call:
 
 jobs:
   # The required check, ci / ok, takes its name from this job.

@@ -32,3 +32,10 @@ vars:
   shellcheck_paths:
     type: string
     description: The shell scripts that check runs on, as space-separated globs.
+  workspace:
+    type: boolean
+    description: Whether the release caller asks which package, since more than one publishes.
+  packages:
+    type: array
+    description: The packages that publish, for the release caller to offer.
+    values: []
