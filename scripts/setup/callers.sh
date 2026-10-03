@@ -19,12 +19,24 @@ shellcheck=false
 if [[ ${shellcheck_paths} == *[![:space:]]* ]]; then shellcheck=true; fi
 python=false
 if [[ -n ${python_min_coverage} ]]; then python=true; fi
+# The release caller asks which package only where more than one publishes, as their tags name it.
+listed="$("${here}/../ci/packages.sh" "${repo}")"
+published=()
+while IFS=$'\t' read -r name _ publishes; do
+  if [[ ${publishes} == true ]]; then published+=("${name}"); fi
+done <<< "${listed}"
+workspace=false
+if [[ ${#published[@]} -gt 1 ]]; then workspace=true; fi
+# mason takes a list as JSON.
+# shellcheck disable=SC2016  # a jq program, whose $ARGS is a jq variable
+packages="$(jq -cn '$ARGS.positional' --args "${published[@]}")"
 
 # Global, so mason leaves no mason.yaml in the repo.
 mason add -g callers --path "${here}/../../bricks/callers" > /dev/null
 rc=0
 out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-exit-if-changed \
   --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" --python "${python}" \
+  --workspace "${workspace}" --packages "${packages}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
   --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
   2>&1)" || rc=$?

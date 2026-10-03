@@ -2,13 +2,16 @@
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
 Include test/utils/repo.sh
 Include test/utils/gh.sh
+Include test/utils/pub.sh
 
 # The scripts it runs have specs of their own, so this covers what chaining them can break.
 Describe 'setup/inside.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/inside.sh"
   manifest='{"image":"img","checks":[{"name":"a","cmd":"a"}]}'
 
-  BeforeEach 'fresh_gh'
+  # Listed by the pub stand-in as the repo's one package, at its root, for the release caller.
+  one_package() { pub_lists p:.; }
+  BeforeEach 'fresh_gh' 'one_package'
 
   sent_checks() {
     jq -r '.rules[] | select(.type == "required_status_checks")
