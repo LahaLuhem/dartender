@@ -42,16 +42,15 @@ Describe 'ci/release-bounds.sh'
       $'# One.\n# Two.\nname: a\nversion: 2.0.0\ndependencies:\n  # Kept as written.\n  b: ^1.1.0\n\n  c: ^1.0.0'
   End
 
-  It 'fails when the package sits on more than one line, rather than guess which to raise'
+  It 'raises the entry in its own section, as indented, and leaves an override of it alone'
     pubspec . w $'publish_to: none\n'
-    pubspec packages/a a $'version: 2.0.0\ndependencies:\n  b: ^1.0.0\ndependency_overrides:\n  b:\n    path: ../b\n'
+    pubspec packages/a a $'version: 2.0.0\ndependencies:\n    b: ^1.0.0\ndependency_overrides:\n  b:\n    path: ../b\n'
     pubspec packages/b b $'version: 1.1.0\n'
     pub_lists w:. a:packages/a b:packages/b
     When run script "${script}" b 1.1.0
-    The status should be failure
-    The error should include 'packages/a/pubspec.yaml'
+    The output should include 'packages/a/pubspec.yaml'
     The contents of file packages/a/pubspec.yaml should equal \
-      $'name: a\nversion: 2.0.0\ndependencies:\n  b: ^1.0.0\ndependency_overrides:\n  b:\n    path: ../b'
+      $'name: a\nversion: 2.0.0\ndependencies:\n    b: ^1.1.0\ndependency_overrides:\n  b:\n    path: ../b'
   End
 
   It "raises dev dependencies' bounds too, the workspace root's included"

@@ -34,26 +34,19 @@ if [[ ${stale} == true ]]; then exit 1; fi
 
 # Raised on every release, so no bound promises less than the repo was built against, and a major
 # can't stop the workspace resolving.
+export NAME="${name}"
+entry='(.dependencies, .dev_dependencies) | .[strenv(NAME)] | select(tag == "!!str")'
 for package in "${names[@]}"; do
   file="${folders[${package}]}/pubspec.yaml"
-  bound="$(NAME="${name}" yq '(.dependencies, .dev_dependencies) | .[strenv(NAME)]
-    | select(tag == "!!str")' "${file}")"
+  bound="$(yq "${entry}" "${file}")"
   if [[ ${bound} != *[0-9]* ]]; then continue; fi
   lags="$(jq -rn --arg a "${bound}" --arg b "${next}" "${below}")"
   if [[ ${lags} != true ]]; then continue; fi
-  # Found as text and rewritten alone: yq's line numbers skip a file's opening comments, and its
-  # round trip reflows the whole file.
+  # By default yq takes a file's opening comments aside first, and its line numbers skip them.
+  line="$(yq --header-preprocess=false "${entry} | key | line" "${file}")"
+  # Just that line, since a YAML round trip reflows the whole file.
   mapfile -t lines < "${file}"
-  at=()
-  for i in "${!lines[@]}"; do
-    if [[ ${lines[i]} =~ ^"  ${name}:"([[:space:]]|$) ]]; then at+=("${i}"); fi
-  done
-  if [[ ${#at[@]} -ne 1 ]]; then
-    echo "::error::${file#./} has ${#at[@]} lines that start '  ${name}:', so it's unclear which" \
-      "bound to raise." >&2
-    exit 1
-  fi
-  lines[at[0]]="  ${name}: ^${next}"
+  lines[line - 1]="${lines[line - 1]%%"${name}:"*}${name}: ^${next}"
   printf '%s\n' "${lines[@]}" > "${file}"
   echo "${file#./}: ${name} ${bound} raised to ^${next}"
 done
