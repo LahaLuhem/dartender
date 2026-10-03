@@ -12,7 +12,9 @@ on:
         type: string
         default: .
       dry-run:
-        description: Shows the line without committing it. Only dartender's self-tests set it.
+        description: >-
+          Shows the line without committing it, and fails when no package gets one. Only
+          dartender's self-tests set it.
         type: boolean
         default: false
       label:

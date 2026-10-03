@@ -65,19 +65,27 @@ jobs:
       dry-run: true
 
   changelog:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Not flutter_package, since cider doesn't care what kind of package it's in.
+        include:
+          - fixture: dart_package
+            files: lib/dart_package.dart
+          - fixture: dart_workspace
+            files: packages/dart_workspace_b/lib/dart_workspace_b.dart
     uses: ./.github/workflows/changelog.yml
     # What changelog.yml's jobs ask for.
     permissions:
       contents: read
       pull-requests: read
     with:
-      # One fixture, since cider doesn't care what kind of package it's in.
-      working-directory: test/workflow_tests/dart_package
+      working-directory: test/workflow_tests/${{ matrix.fixture }}
       dry-run: true
       # Stand-ins for a merged PR's, since dartender's own PRs carry no sem-* label.
       label: sem-change
       title: A line from dartender's self-test
-      files: lib/dart_package.dart
+      files: ${{ matrix.files }}
 
   # Pushes to main have no pull request to check.
   conventions:
