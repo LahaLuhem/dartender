@@ -87,6 +87,31 @@ jobs:
       title: A line from dartender's self-test
       files: ${{ matrix.files }}
 
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Not flutter_package, since a release does the same in one, its example's lockfile being
+        # untracked here.
+        include:
+          - fixture: dart_package
+            package: ""
+          - fixture: dart_workspace
+            package: dart_workspace_b
+    uses: ./.github/workflows/release.yml
+    # What release.yml's job asks for.
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      working-directory: test/workflow_tests/${{ matrix.fixture }}
+      bump: patch
+      package: ${{ matrix.package }}
+      # Only a real release can test the push.
+      dry-run: true
+      # Stand-ins for Dependabot's PRs, since none touches the fixtures.
+      dependabot-titles: A line from dartender's self-test
+
   # Pushes to main have no pull request to check.
   conventions:
     if: github.event_name == 'pull_request'
@@ -113,7 +138,7 @@ jobs:
 
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, changelog, conventions, specs, setup-image]
+    needs: [ci, fixtures, publish, changelog, release, conventions, specs, setup-image]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -124,6 +149,7 @@ jobs:
             fixtures=${{ needs.fixtures.result }}
             publish=${{ needs.publish.result }}
             changelog=${{ needs.changelog.result }}
+            release=${{ needs.release.result }}
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
             setup-image=${{ needs.setup-image.result }}
