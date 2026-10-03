@@ -8,7 +8,7 @@ on:
         type: string
         default: ""
       working-directory:
-        description: Folder of the package. Only dartender's self-tests change it.
+        description: Folder of the repo's root. Only dartender's self-tests change it.
         type: string
         default: .
       dry-run:
@@ -23,6 +23,11 @@ on:
         default: ""
       title:
         description: The title that goes with that label. Only dartender's self-tests set it.
+        type: string
+        default: ""
+      files:
+        description: >-
+          Changed files that go with that label, one per line. Only dartender's self-tests set it.
         type: string
         default: ""
     secrets:
@@ -44,6 +49,7 @@ jobs:
     outputs:
       type: ${{ steps.type.outputs.type }}
       title: ${{ steps.type.outputs.title }}
+      number: ${{ steps.type.outputs.number }}
     steps:
       - id: type
         uses: $/actions/changelog-type
@@ -58,6 +64,10 @@ jobs:
     needs: find
     if: needs.find.outputs.type != ''
     runs-on: ubuntu-latest
+    # Reading the PR's changed files. The App's token does the writing.
+    permissions:
+      contents: read
+      pull-requests: read
     # Runs wait in line, so each one's checkout holds the line the one before it wrote.
     concurrency:
       group: changelog-${{ github.ref }}
@@ -68,7 +78,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           persist-credentials: false
-      # Only for its Dart, which cider runs on.
+      # Only for its Dart, which cider and the package list run on.
       - uses: $/actions/setup-flutter
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -87,6 +97,8 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
           repo: ${{ github.repository }}
           branch: ${{ github.ref_name }}
+          number: ${{ needs.find.outputs.number }}
+          files: ${{ inputs.files }}
           type: ${{ needs.find.outputs.type }}
           title: ${{ needs.find.outputs.title }}
           token: ${{ steps.token.outputs.token }}

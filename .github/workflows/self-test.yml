@@ -77,6 +77,7 @@ jobs:
       # Stand-ins for a merged PR's, since dartender's own PRs carry no sem-* label.
       label: sem-change
       title: A line from dartender's self-test
+      files: lib/dart_package.dart
 
   # Pushes to main have no pull request to check.
   conventions:

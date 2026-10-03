@@ -1,16 +1,24 @@
 name: Changelog
-description: Adds a line to the package's CHANGELOG.md with cider, and commits it to the branch.
+description: >-
+  Adds a line with cider to each package the PR changed, and commits each one's CHANGELOG.md.
 
 inputs:
   working-directory:
-    description: Folder of the package.
+    description: Folder of the repo's root.
     default: .
   repo:
     description: The repository, as owner/name.
     required: true
   branch:
-    description: The branch that was checked out, which the commit goes to.
+    description: The branch that was checked out, which the commits go to.
     required: true
+  number:
+    description: The merged PR's number, whose changed files decide which packages get the line.
+    default: ""
+  files:
+    description: >-
+      Changed files to take instead of the PR's, one per line. Only dartender's self-test sets it.
+    default: ""
   type:
     description: The cider type the line goes under.
     required: true
@@ -33,8 +41,12 @@ runs:
       env:
         REPO: ${{ inputs.repo }}
         BRANCH: ${{ inputs.branch }}
+        NUMBER: ${{ inputs.number }}
+        FILES: ${{ inputs.files }}
         TYPE: ${{ inputs.type }}
         TITLE: ${{ inputs.title }}
         DRY_RUN: ${{ inputs.dry-run }}
-        GH_TOKEN: ${{ inputs.token }}
+        COMMIT_TOKEN: ${{ inputs.token }}
+        # gh won't call the API without a token, even for public repos.
+        GH_TOKEN: ${{ github.token }}
       run: '"$GITHUB_ACTION_PATH/../../scripts/ci/changelog.sh"'

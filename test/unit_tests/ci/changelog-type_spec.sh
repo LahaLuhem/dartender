@@ -48,7 +48,7 @@ Describe 'ci/changelog-type.sh'
     title=$'Add `putAll`  for $HOME\nand more'
     PULLS="[$(pull 7 "${SHA}" LahaLuhem "${title}")]"
     # shellcheck disable=SC2016  # the title as it has to come out, backticks and dollar sign intact
-    expected="$(printf '%s\n' type=added 'title=Add `putAll`  for $HOME and more')"
+    expected="$(printf '%s\n' type=added 'title=Add `putAll`  for $HOME and more' number=7)"
     export PULLS LABELS=sem-add
     When run script "${script}"
     The status should be success
@@ -98,6 +98,7 @@ Describe 'ci/changelog-type.sh'
     When run script "${script}"
     The status should be success
     The line 2 of output should equal 'title=Add a thing'
+    The line 3 of output should equal 'number=7'
     The error should include '#7'
   End
 
@@ -135,7 +136,7 @@ Describe 'ci/changelog-type.sh'
 
     It 'takes a stand-in label and title without asking the API'
       export LABEL=sem-change TITLE=Probe
-      expected="$(printf '%s\n' type=changed title=Probe)"
+      expected="$(printf '%s\n' type=changed title=Probe number=)"
       When run script "${script}"
       The status should be success
       The output should equal "${expected}"

@@ -5,7 +5,7 @@ here="$(dirname "${BASH_SOURCE[0]}")"
 
 # The self-test's stand-ins, since dartender's own PRs carry no sem-* label.
 if [[ -n ${LABEL:-} ]]; then
-  who="The self-test's stand-in" label="${LABEL}" title="${TITLE:-}"
+  who="The self-test's stand-in" label="${LABEL}" title="${TITLE:-}" number=''
 else
   pulls="$(gh api "repos/${REPO}/commits/${SHA}/pulls")"
   # A rebase merge lists every commit it brought under the PR, but only the last is its merge commit.
@@ -45,3 +45,4 @@ echo "${who} is ${label}, so its line goes under ${type^}." >&2
 echo "type=${type}"
 # cider takes one line, and a line break here would start another output.
 echo "title=${title//[$'\r\n']/ }"
+echo "number=${number}"

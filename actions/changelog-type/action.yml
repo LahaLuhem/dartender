@@ -24,6 +24,9 @@ outputs:
   title:
     description: The PR's title, which becomes the line.
     value: ${{ steps.type.outputs.title }}
+  number:
+    description: The PR's number, or empty for the self-test's stand-ins.
+    value: ${{ steps.type.outputs.number }}
 
 runs:
   using: composite
