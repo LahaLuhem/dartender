@@ -160,6 +160,22 @@ jobs:
       - working-directory: ${{ inputs.working-directory }}
         run: dart run dependency_validator
 
+  dartdoc:
+    name: Dartdoc
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: $/actions/dartdoc
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
   test:
     name: Tests
     needs: plan
@@ -322,6 +338,7 @@ jobs:
       - format
       - analyze
       - dependencies
+      - dartdoc
       - test
       - example-dependencies
       - example-test
@@ -343,6 +360,7 @@ jobs:
             format=${{ needs.format.result }}
             analyze=${{ needs.analyze.result }}
             dependencies=${{ needs.dependencies.result }}
+            dartdoc=${{ needs.dartdoc.result }}
             test=${{ needs.test.result }}
             example-dependencies=${{ needs.example-dependencies.result }}
             example-test=${{ needs.example-test.result }}
