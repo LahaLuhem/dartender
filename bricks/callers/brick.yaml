@@ -36,6 +36,5 @@ vars:
     type: boolean
     description: Whether the release caller asks which package, since more than one publishes.
   packages:
-    type: array
+    type: list
     description: The packages that publish, for the release caller to offer.
-    values: []
