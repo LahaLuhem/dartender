@@ -274,7 +274,6 @@ linter:
     unawaited_futures: true
     unintended_html_in_doc_comment: true
     unnecessary_async: true
-    unnecessary_await_in_return: false # deprecated by the analyzer, which warns when it's on
     unnecessary_brace_in_string_interps: true
     unnecessary_breaks: true
     unnecessary_const: true
