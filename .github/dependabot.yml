@@ -26,3 +26,11 @@ updates:
       interval: weekly
     commit-message:
       prefix: build
+
+  # It has no dependencies to bump, but the Dependabot config check wants every pubspec watched.
+  - package-ecosystem: pub
+    directory: /lints
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
