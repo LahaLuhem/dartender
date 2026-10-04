@@ -4,5 +4,3 @@
 library;
 
 export 'src/dart_workspace_a_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.

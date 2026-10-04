@@ -11,6 +11,8 @@ dependencies:
   # path: ^1.9.0
 
 dev_dependencies:
+  # By path, so each self-test run analyzes with the lints of its own commit, not main's.
+  dartender_lints:
+    path: ../../../lints
   dependency_validator: ^5.1.0
-  lints: ^6.0.0
   test: ^1.25.6

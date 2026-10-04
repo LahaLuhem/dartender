@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:dart_package/dart_package.dart';
 
 void main() {
-  var awesome = Awesome();
-  print('awesome: ${awesome.isAwesome}');
+  final awesome = Awesome();
+  stdout.writeln('awesome: ${awesome.isAwesome}');
 }
