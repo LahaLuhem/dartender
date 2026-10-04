@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # A new Flutter can bring lints the shared file doesn't decide yet, with no PR here to notice.
+  schedule:
+    - cron: "17 5 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -136,9 +139,24 @@ jobs:
           persist-credentials: false
       - run: docker build --tag dartender-setup - < scripts/setup/Dockerfile
 
+  lint-rules:
+    name: Lint rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Flutter's, so it's the Dart that analyzes every repo.
+      - uses: ./actions/setup-flutter
+        with:
+          pub-get: "false"
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/lint-rules.sh lints/lib/analysis_options.yaml
+
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, changelog, release, conventions, specs, setup-image]
+    needs: [ci, fixtures, publish, changelog, release, conventions, specs, setup-image, lint-rules]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -153,6 +171,7 @@ jobs:
             conventions=${{ needs.conventions.result }}
             specs=${{ needs.specs.result }}
             setup-image=${{ needs.setup-image.result }}
+            lint-rules=${{ needs.lint-rules.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1

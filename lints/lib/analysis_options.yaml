@@ -331,6 +331,7 @@ linter:
     use_to_and_as_if_applicable: true
     use_truncating_division: true
     valid_regexps: true
+    var_with_no_type_annotation: true
     void_checks: true
 
 dart_code_metrics:
