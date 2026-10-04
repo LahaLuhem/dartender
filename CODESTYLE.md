@@ -32,6 +32,8 @@ a real package repo.
   set. The last one catches a write that didn't need to happen.
 - **Fixtures come from the tool that makes real packages** (`flutter create`, `dart create`,
   `uv init`), and change only where a job needs it, so CI gets tested on what a package repo has.
+  That includes the [shared lints](README.md#the-analyzer), taken by path so a PR's run analyzes
+  with its own version, and `dart fix` for what they flag.
 
 ## CI YAML
 
