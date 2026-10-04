@@ -143,7 +143,7 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
       - working-directory: ${{ inputs.working-directory }}
-        run: dart analyze --fatal-infos .
+        run: dart analyze --fatal-infos --fatal-warnings .
 
   dependencies:
     name: Dependency validator
