@@ -1,0 +1,7 @@
+name: dartender_lints
+description: The analysis options every package repo on dartender shares.
+publish_to: none
+
+environment:
+  # Some of the lints it turns on are new in 3.13.
+  sdk: ^3.13.0
