@@ -9,12 +9,14 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 The jobs live here, and every package repo runs them from `main`. A package repo keeps only a few
 small files of its own, plus some settings on GitHub that the jobs count on, and
-[`setup.sh`](#setting-up-a-repo) makes all of them.
+[`setup.sh`](#setting-up-a-repo) makes all of them but the analyzer's, which
+[go in by hand](#the-analyzer).
 
 | In a package repo | What it's for |
 |---|---|
 | The caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml`, `changelog.yml` and `release.yml` from here, see [Calling it](#calling-it) |
-| `.github/lint-checks.json` | Which linters run, see [Lints](#lints) |
+| `analysis_options.yaml`, and `dartender_lints` in the dev dependencies | The analyzer's settings, shared, see [The analyzer](#the-analyzer) |
+| `.github/lint-checks.json` | Which linters run, see [The linters](#the-linters) |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
 
@@ -212,6 +214,46 @@ Not covered: Flutter workspaces, and a member with an example app of its own.
 
 ## Lints
 
+### The analyzer
+
+Every package repo analyzes with one `analysis_options.yaml`, the one in [`lints/`](lints/), so a
+lint a new Dart adds or drops gets decided here once. DCM's settings are in it too. A repo takes it
+as a dev dependency on `main`, which pub.dev allows:
+
+```yaml
+dev_dependencies:
+  dartender_lints:
+    git:
+      url: https://github.com/LahaLuhem/dartender.git
+      path: lints
+      ref: main
+```
+
+Its own `analysis_options.yaml` is then only the include:
+
+```yaml
+include: package:dartender_lints/analysis_options.yaml
+```
+
+An app inside the repo, like the example, needs the same dev dependency, since it resolves the
+include through its own packages. It includes the package itself rather than
+`../analysis_options.yaml`, which the dependency validator doesn't count as using it. An app has no
+API to document:
+
+```yaml
+include: package:dartender_lints/analysis_options.yaml
+
+linter:
+  rules:
+    public_member_api_docs: false
+```
+
+`setup.sh` doesn't write any of this. Where `pubspec.lock` isn't tracked, as at a package's root,
+the next CI run takes whatever `main` has. A tracked one, like an example's, keeps its revision
+until Dependabot's weekly bump.
+
+### The linters
+
 `lint-checks.json` lists the linters CI runs, each from the
 [linterpol](https://github.com/LahaLuhem/linterpol) image, and `setup.sh` writes it. Repos without
 their own `.rumdl.toml` or `.yamllint.yaml` get the ones in `actions/lint/defaults/`. A linter only
@@ -237,7 +279,7 @@ passes.
 | `.github/workflows/publish.yml` | Publishes a package repo's tagged release to pub.dev |
 | `.github/workflows/changelog.yml` | Writes each merged PR's line in the `CHANGELOG.md` of every published package it changed |
 | `.github/workflows/release.yml` | Releases a package repo's package from its Actions tab, see [Releasing](#releasing) |
-| `.github/workflows/self-test.yml` | Dartender's own CI |
+| `.github/workflows/self-test.yml` | Dartender's own CI, weekly too |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
@@ -254,6 +296,7 @@ passes.
 | `actions/changelog/` | Adds that line with cider to each package the PR changed, and commits each through the contents API |
 | `actions/release/` | Writes Dependabot's lines, bumps and dates the release, commits it as whoever started the run, and pushes commit and tag together |
 | `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
+| `lints/` | The `dartender_lints` package, whose `analysis_options.yaml` every package repo includes, see [The analyzer](#the-analyzer) |
 | `scripts/` | The shell the actions run, and the `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
@@ -271,6 +314,13 @@ that one. Where specs go and how to write them is in [CODESTYLE.md](CODESTYLE.md
 Every package repo runs whatever is on `main`, so `main` only moves through PRs that pass
 `self-test-ok`. That's also why the workflows reach their own actions with `$/`: it pins them to
 the commit being run, so a PR tests its own version of everything.
+
+The shared `analysis_options.yaml` has to turn every lint the newest stable Flutter's Dart has on
+or off, and name none it has deprecated or removed. The analyzer only warns about those in a
+package's own file, never in one it includes, so the repos would never hear of them. The self-test
+checks it on every PR and weekly, which is how a new Flutter's lints turn up here. Turning a lint
+on reaches every repo's next CI run, so one that flags anything there turns that repo red until
+it's fixed. To see what it flags first, turn it on under the include in a repo's own file.
 
 Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.md).
 
