@@ -9,4 +9,7 @@ workspace:
   - packages/dart_workspace_b
 
 dev_dependencies:
+  # By path, so each self-test run analyzes with the lints of its own commit, not main's.
+  dartender_lints:
+    path: ../../../lints
   dependency_validator: ^5.1.0

@@ -1,6 +1,8 @@
-// TODO: Put public facing types in this file.
-
 /// Checks if you are awesome. Spoiler: you are.
-class Awesome {
+class Awesome() {
+  /// Creates it.
+  this;
+
+  /// Whether you are awesome.
   bool get isAwesome => true;
 }
