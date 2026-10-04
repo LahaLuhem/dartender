@@ -49,8 +49,14 @@ fills in.
 - **A template that needs `${{ }}` switches its tags.** mason takes `${{ github.ref }}` for one of
   its own and leaves only `$`. So `{{=<% %>=}}` goes at the end of the header line, where it leaves
   no trace, and strings become `<%&name%>`, like in the changelog caller.
+- **A template that switches needs a `${{ }}` without `=`, `,` or `;` in it.** mason only renders
+  a file holding a tag like that, and the switch has an `=`, so without one the file gets copied
+  as it is, `<% %>` tags and all.
 - **An optional block gets a boolean of its own, with its tags inline.** A section renders for any
   string, the empty one too, and a line holding only a tag comes out blank instead of going away.
+- **A list goes in as a JSON array, and comes out one item per line.** mason takes
+  `--packages '["a","b"]'` as a list, and anything else as one item, a comma-separated string too.
+  A `[a, b]` flow list of a workspace's packages can run past ryl's line length.
 - **`callers.sh` passes every variable.** mason asks for a missing one, which fails without a
   terminal, and it doesn't check a value against its type.
 

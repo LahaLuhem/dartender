@@ -13,7 +13,7 @@ small files of its own, plus some settings on GitHub that the jobs count on, and
 
 | In a package repo | What it's for |
 |---|---|
-| 4 caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml` and `changelog.yml` from here, see [Calling it](#calling-it) |
+| The caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml`, `changelog.yml` and `release.yml` from here, see [Calling it](#calling-it) |
 | `.github/lint-checks.json` | Which linters run, see [Lints](#lints) |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
@@ -73,7 +73,7 @@ repo's older ruleset, if it has one, since nothing runs that one's required chec
 
 | What | Where | Taken from |
 |---|---|---|
-| The `ci`, `conventions`, `publish` and `changelog` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), and your answers |
+| The `ci`, `conventions`, `publish`, `changelog` and `release` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), your answers, and the packages the repo publishes |
 | `lint-checks.json` | `.github/`, for you to commit | The same |
 | `dependabot.yml`, a weekly block for each folder Dependabot has to watch | `.github/`, for you to commit | The repo's files, new ones included |
 | The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` and lets the changelog App past | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
@@ -93,7 +93,7 @@ have to pass.
 - **Point it at the default branch, and add the check** by its job's `name:`, or the job's id when
   it has none.
 - **Add the repo's admins and the changelog App to its bypass list**, since each ruleset has its
-  own and the App's changelog commit has to get past every one.
+  own and the App's changelog commits and releases have to get past every one.
 
 ### When to run it again
 
@@ -101,6 +101,7 @@ have to pass.
   config job fails and names it.
 - **dartender changes what it writes or sets**, like a new label.
 - **An answer changes**, like the lowest coverage.
+- **A package starts or stops publishing**, since the release form lists the ones that do.
 
 <details>
 <summary>What happens under the hood</summary>
@@ -123,7 +124,7 @@ how to import it by hand.
 
 ## Calling it
 
-A package repo calls each workflow from a caller that `setup.sh` writes, with one job pinned to
+A package repo calls each workflow from a caller that `setup.sh` writes, with a job pinned to
 `@main`, like `uses: LahaLuhem/dartender/.github/workflows/ci.yml@main`. The required checks,
 `ci / ok` and `conventions / ok`, take their names from the `ci` and `conventions` jobs.
 
@@ -133,8 +134,10 @@ A package repo calls each workflow from a caller that `setup.sh` writes, with on
 | `conventions` | `conventions.yml` | `contents: read`, `pull-requests: read` | Reading the PR's commits and labels |
 | `publish` | `publish.yml` | `contents: read`, `id-token: write` | The OIDC token pub.dev takes instead of a login |
 | `changelog` | `changelog.yml` | `contents: read`, `pull-requests: read` | Reading the merged PR. The App's token does the writing |
+| `release` | `release.yml` | `contents: read`, `pull-requests: read` | Reading Dependabot's PRs. The App's token does the pushing |
 
 If a caller grants less than a job asks for, the run won't start, even when that job would skip.
+The `release` caller runs the `ci` caller first, from a job of its own with the same grants.
 
 The `publish` caller runs on a version tag, whose form depends on how many packages the repo
 publishes:
@@ -149,12 +152,14 @@ A tag in the other form fails the run, which says the form the repo takes.
 The `changelog` caller runs on each push to the default branch. For a merged PR, it adds the PR's
 title under the section its `sem-*` label names, in the `CHANGELOG.md` of each published package
 the PR changed. A file counts for the deepest package folder holding it, so in a repo of one
-package every PR's line goes there. `sem-skip` and Dependabot's PRs get none. A line that shouldn't
-go to every package the PR changed needs a PR per package, or a hand edit after the merge.
+package every PR's line goes there. `sem-skip` PRs get none, and Dependabot's get theirs at
+[release](#releasing). A line that shouldn't go to every package the PR changed needs a PR per
+package, or a hand edit after the merge.
 
 Each `CHANGELOG.md` goes in as a commit of its own, with the changelog App's token, which the
-ruleset lets past. So the repo needs the App installed, its ID in an `APP_ID` variable and its
-private key in an `APP_PRIVATE_KEY` secret. The setup doesn't make those.
+ruleset lets past, and a release pushes with it too. So the repo needs the App installed, its ID in
+an `APP_ID` variable and its private key in an `APP_PRIVATE_KEY` secret. The setup doesn't make
+those.
 
 The ruleset has to be in place before the `ci` caller lands. Until it requires `ci / ok`, `gh`
 merges Dependabot's PRs on the spot instead of waiting for CI. A run that says yes to GitHub takes
@@ -162,6 +167,30 @@ care of that.
 
 A repo's own workflow can use the setup actions here too, after its checkout, like
 `uses: LahaLuhem/dartender/actions/setup-flutter@main`.
+
+## Releasing
+
+A release starts from the repo's **Actions** tab: **Release**, then **Run workflow** on the default
+branch. Its form asks which part of the version moves, which package where the repo publishes more
+than one, and whether it's a dry run. A dry run goes through everything but the push.
+
+The repo's own CI runs first. Once it passes, the release, for that package:
+
+1. Adds the title of each Dependabot PR since the last release that changed the package's
+   `dependencies:`, under Changed. Dev dependencies don't count.
+2. Bumps the version with cider, and dates what's under Unreleased as that version.
+3. Raises any lower bound the repo's other packages have on it to the new version.
+4. Runs `flutter pub get` in the example, where its `pubspec.lock` is tracked, since that pins the
+   version.
+5. Commits it all as whoever started the run, then runs `dart pub publish --dry-run`.
+6. Pushes the commit and the version's tag together, with the changelog App's token.
+
+That tag starts the `publish` caller. The run's summary shows the release notes, a dry run's too.
+
+A release needs a tag for the package's current version, where Dependabot's lines start from, and
+something to release, under Unreleased or from Dependabot. In a workspace, a package whose lower
+bound on another of the repo's packages is below the major the repo has of it can't be released
+until that bound goes up, since pub.dev keeps a published bound for good.
 
 ## Workspaces
 
@@ -176,6 +205,7 @@ needs nothing set up of its own.
 | Dartdoc | Each package that publishes |
 | Publish | The package the tag names, see [Calling it](#calling-it) |
 | Changelog | Each published package the PR changed, see [Calling it](#calling-it) |
+| Release | The package picked in the form, see [Releasing](#releasing) |
 | `dependabot.yml` | One `pub` block, at the root, since pub only updates a workspace from there |
 
 Not covered: Flutter workspaces, and a member with an example app of its own.
@@ -202,10 +232,11 @@ passes.
 
 | Path | What |
 |---|---|
-| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs and pushes to main, plus auto-merge for Dependabot's PRs |
+| `.github/workflows/ci.yml` | The checks a package repo runs on its PRs, its pushes to main and before a release, plus auto-merge for Dependabot's PRs |
 | `.github/workflows/conventions.yml` | The rules a package repo's PRs follow |
 | `.github/workflows/publish.yml` | Publishes a package repo's tagged release to pub.dev |
 | `.github/workflows/changelog.yml` | Writes each merged PR's line in the `CHANGELOG.md` of every published package it changed |
+| `.github/workflows/release.yml` | Releases a package repo's package from its Actions tab, see [Releasing](#releasing) |
 | `.github/workflows/self-test.yml` | Dartender's own CI |
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
@@ -221,6 +252,7 @@ passes.
 | `actions/tag-package/` | Finds the folder of the package a tag publishes |
 | `actions/changelog-type/` | Finds the PR a pushed commit came from, and the changelog section its line goes under |
 | `actions/changelog/` | Adds that line with cider to each package the PR changed, and commits each through the contents API |
+| `actions/release/` | Writes Dependabot's lines, bumps and dates the release, commits it as whoever started the run, and pushes commit and tag together |
 | `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
 | `scripts/` | The shell the actions run, and the `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
@@ -244,4 +276,4 @@ Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.m
 
 Commits here are [conventional](https://www.conventionalcommits.org), so `git cliff` turns the
 history into a changelog. The package repos stick to one changelog entry per PR, which
-`changelog.yml` writes as the PR merges.
+`changelog.yml` writes as the PR merges, or `release.yml` at release for Dependabot's.
