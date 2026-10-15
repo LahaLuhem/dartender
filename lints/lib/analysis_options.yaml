@@ -76,14 +76,6 @@ analyzer:
     # `dart analyze` only reports TODOs at warning or above, so `info` lets them through CI.
     todo: info
 
-    # linter ignores
-    lines_longer_than_80_chars: ignore
-    always_use_package_imports: ignore
-    avoid_setters_without_getters: ignore
-    sort_constructors_first: ignore
-    require_trailing_commas: ignore
-    type_annotate_public_apis: ignore
-
 linter:
   rules:
     always_declare_return_types: true
@@ -121,7 +113,7 @@ linter:
     avoid_return_types_on_setters: true
     avoid_returning_null_for_void: true
     avoid_returning_this: true
-    avoid_setters_without_getters: true
+    avoid_setters_without_getters: false
     avoid_shadowing_type_parameters: true
     avoid_single_cascade_in_expression_statements: true
     avoid_slow_async_io: true
@@ -177,7 +169,7 @@ linter:
     library_names: true
     library_prefixes: true
     library_private_types_in_public_api: true
-    lines_longer_than_80_chars: true
+    lines_longer_than_80_chars: false
     literal_only_boolean_expressions: true
     matching_super_parameters: true
     missing_code_block_language_in_doc_comment: true
@@ -256,7 +248,7 @@ linter:
     sized_box_shrink_expand: true
     slash_for_doc_comments: true
     sort_child_properties_last: true
-    sort_constructors_first: true
+    sort_constructors_first: false
     sort_pub_dependencies: false
     sort_unnamed_constructors_first: true
     specify_nonobvious_local_variable_types: false  # Conflicts with omit_local_variable_types
