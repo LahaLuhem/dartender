@@ -11,7 +11,7 @@ runs:
   steps:
     # No major tags after v7, so this one is a full version. Left out, `version` takes the
     # project's `required-version`, or else the latest uv.
-    - uses: astral-sh/setup-uv@v10.2.0
+    - uses: astral-sh/setup-uv@v10.3.0
       with:
         working-directory: ${{ inputs.working-directory }}
         enable-cache: auto
