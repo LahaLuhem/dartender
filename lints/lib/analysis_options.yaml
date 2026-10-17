@@ -338,7 +338,7 @@ dart_code_metrics:
     - avoid-collection-methods-with-unrelated-types
     - avoid-commented-out-code
     - avoid-conditions-with-boolean-literals
-    #    - avoid-conditions-with-avoid-double-slash-imports-literals
+    - avoid-double-slash-imports
     - avoid-duplicate-exports
     - avoid-duplicate-mixins
     - avoid-duplicate-named-imports
@@ -421,4 +421,5 @@ dart_code_metrics:
     #        ignore-private-widgets
     - prefer-text-rich
     - prefer-using-list-view
+    - provide-image-semantic-label
     - use-setstate-synchronously
