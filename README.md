@@ -321,7 +321,9 @@ or off, and name none it has deprecated or removed. The analyzer only warns abou
 package's own file, never in one it includes, so the repos would never hear of them. The self-test
 checks it on every PR and weekly, which is how a new Flutter's lints turn up here. Turning a lint
 on reaches every repo's next CI run, so one that flags anything there turns that repo red until
-it's fixed. To see what it flags first, turn it on under the include in a repo's own file.
+it's fixed. To see what it flags first, turn it on under the include in a repo's own file. Every free
+Dart and Flutter rule DCM has needs deciding too, which the self-test checks against
+[dcm.dev's list](https://dcm.dev/docs/rules/?plan=free).
 
 Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.md).
 

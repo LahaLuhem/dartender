@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
-  # A new Flutter can bring lints the shared file doesn't decide yet, with no PR here to notice.
+  # A new Flutter or DCM can bring rules the shared file doesn't decide, with no PR here to notice.
   schedule:
     - cron: "17 5 * * 1"
   workflow_dispatch:
@@ -154,9 +154,30 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/ci/lint-rules.sh lints/lib/analysis_options.yaml
 
+  dcm-rules:
+    name: DCM rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Same version as the spec image's, in test/Dockerfile.
+      - run: npm install --global acorn@8.19.0
+      - run: scripts/ci/dcm-rules.sh lints/lib/analysis_options.yaml
+
   # Dartender's required check. Every repo runs whatever is on main, so this is the only gate.
   self-test-ok:
-    needs: [ci, fixtures, publish, changelog, release, conventions, specs, setup-image, lint-rules]
+    needs:
+      - ci
+      - fixtures
+      - publish
+      - changelog
+      - release
+      - conventions
+      - specs
+      - setup-image
+      - lint-rules
+      - dcm-rules
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
@@ -172,6 +193,7 @@ jobs:
             specs=${{ needs.specs.result }}
             setup-image=${{ needs.setup-image.result }}
             lint-rules=${{ needs.lint-rules.result }}
+            dcm-rules=${{ needs.dcm-rules.result }}
         run: echo "$RESULTS"
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1
