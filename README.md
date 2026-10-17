@@ -176,7 +176,8 @@ A release starts from the repo's **Actions** tab: **Release**, then **Run workfl
 branch. Its form asks which part of the version moves, which package where the repo publishes more
 than one, and whether it's a dry run. A dry run goes through everything but the push.
 
-The repo's own CI runs first. Once it passes, the release, for that package:
+The repo's `ci` caller runs first, and no other workflow of the repo's. Once it passes, the release,
+for that package:
 
 1. Adds the title of each Dependabot PR since the last release that changed the package's
    `dependencies:`, under Changed. Dev dependencies don't count.
