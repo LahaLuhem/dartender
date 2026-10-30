@@ -89,11 +89,14 @@ if [[ ${answer} == true ]]; then
       "${python_min_coverage}" "the lowest Python coverage"
     python_min_coverage="${answer}"
   fi
+  ignored_lints="$(caller_value ignored-lints)"
+  ask_for "Lints for CI's Analyze to ignore, space-separated, blank for none" "${ignored_lints}"
+  ignored_lints="${answer}"
   shellcheck="$(shellcheck_paths)"
   ask_for "Shell scripts for ShellCheck, space-separated globs, blank for none" "${shellcheck}"
   shellcheck="${answer}"
   "${here}/callers.sh" "${coveralls}" "${min_coverage}" "${coverage_excludes}" \
-    "${python_min_coverage}" "${shellcheck}"
+    "${python_min_coverage}" "${ignored_lints}" "${shellcheck}"
 else
   info "Left the callers and lint-checks.json in .github as they are"
 fi

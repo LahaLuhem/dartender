@@ -25,6 +25,12 @@ on:
           needs the project's own --cov, without which nothing gets measured and anything passes.
         type: number
         default: 0
+      ignored-lints:
+        description: >-
+          Space-separated lints Analyze ignores, while the IDE still shows them, like
+          deprecated_member_use_from_same_package.
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -142,6 +148,14 @@ jobs:
       - uses: $/actions/setup-flutter
         with:
           working-directory: ${{ inputs.working-directory }}
+      # In this checkout only, so the IDE still shows them.
+      - if: inputs.ignored-lints != ''
+        working-directory: ${{ inputs.working-directory }}
+        env:
+          LINTS: ${{ inputs.ignored-lints }}
+        run: >-
+          yq -i '.analyzer.errors *= (strenv(LINTS) | split(" ") | map(select(. != ""))
+          | map({"key": ., "value": "ignore"}) | from_entries)' analysis_options.yaml
       - working-directory: ${{ inputs.working-directory }}
         run: dart analyze --fatal-infos --fatal-warnings .
 

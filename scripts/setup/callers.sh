@@ -5,13 +5,13 @@ source "${here}/common.sh"
 
 usage() {
   error "Usage: callers.sh <coveralls> <min-coverage> <coverage-excludes> <python-min-coverage>" \
-    "<shellcheck-paths> [folder]"
+    "<ignored-lints> <shellcheck-paths> [folder]"
   exit 2
 }
 
-[[ $# -ge 5 && $# -le 6 ]] || usage
+[[ $# -ge 6 && $# -le 7 ]] || usage
 coveralls="$1" min_coverage="$2" coverage_excludes="$3" python_min_coverage="$4"
-shellcheck_paths="$5" repo="${6:-.}"
+ignored_lints="$5" shellcheck_paths="$6" repo="${7:-.}"
 branch="$(git -C "${repo}" symbolic-ref --short refs/remotes/origin/HEAD)"
 branch="${branch#origin/}"
 # mason renders a section even for an empty string, so the brick switches these on booleans.
@@ -39,7 +39,7 @@ out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-e
   --workspace "${workspace}" --packages "${packages}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
   --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
-  2>&1)" || rc=$?
+  --ignored_lints "${ignored_lints}" 2>&1)" || rc=$?
 case "${rc}" in
   0) success "The callers and lint-checks.json in ${repo}/.github are already up to date" ;;
   # What --set-exit-if-changed exits with when it changed a file.

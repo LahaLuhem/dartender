@@ -135,7 +135,7 @@ Describe 'setup/inside.sh'
       has_python
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
-        '      python-min-coverage: 80')"
+        '      python-min-coverage: 80' '      ignored-lints: lint_a')"
       track "${r}" .github/workflows/ci.yml "${caller}"
       cd "${r}" || return
       When run script "${script}"
@@ -143,7 +143,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The line 1 of result of function asked should include 'callers'
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a'
     End
 
     It "falls back to ci.yml's own defaults for a repo without a ci caller"
@@ -154,12 +154,13 @@ Describe 'setup/inside.sh'
       min_coverage="$(default_of min-coverage)"
       excludes="$(default_of coverage-excludes)"
       python_min_coverage="$(default_of python-min-coverage)"
+      ignored_lints="$(default_of ignored-lints)"
       cd "${r}" || return
       When run script "${script}"
       The status should be success
       The output should be present
       The result of function make_call should end with \
-        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage}"
+        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints}"
     End
 
     It "falls back to ci.yml's own default for an input the ci caller doesn't pass yet, quietly"
@@ -170,13 +171,14 @@ Describe 'setup/inside.sh'
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart')"
       track "${r}" .github/workflows/ci.yml "${caller}"
       python_min_coverage="$(default_of python-min-coverage)"
+      ignored_lints="$(default_of ignored-lints)"
       cd "${r}" || return
       When run script "${script}"
       The status should be success
       The output should be present
       The stderr should be blank
       The result of function make_call should end with \
-        "--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage ${python_min_coverage}"
+        "--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints}"
     End
 
     It "has the same run's dependabot.yml watch the callers it wrote"
@@ -208,7 +210,7 @@ Describe 'setup/inside.sh'
       local caller
       caller="$(printf '%s\n' 'jobs:' '  ci:' '    with:' '      coveralls: false' \
         '      min-coverage: 90' '      coverage-excludes: lib/x.dart' \
-        '      python-min-coverage: 80')"
+        '      python-min-coverage: 80' '      ignored-lints: lint_a')"
       track "${r}" .github/workflows/ci.yml "${caller}"
       has_python
     }
@@ -225,6 +227,7 @@ Describe 'setup/inside.sh'
       The result of function asked should include '--value 90'
       The result of function asked should include '--value lib/x.dart'
       The result of function asked should include '--value 80'
+      The result of function asked should include '--value lint_a'
     End
 
     It "leaves out the Python coverage where there's no benchmark/python"
@@ -241,8 +244,9 @@ Describe 'setup/inside.sh'
     Describe 'what gets typed'
       Parameters
         'the lowest coverage' 'coverage that passes' 80 '--min_coverage 80 '
-        'the excludes' 'space-separated' 'lib/y.dart' '--coverage_excludes lib/y.dart'
+        'the excludes' 'out of coverage' 'lib/y.dart' '--coverage_excludes lib/y.dart'
         'the lowest Python coverage' 'benchmark/python' 70 '--python_min_coverage 70'
+        'the ignored lints' 'Analyze to ignore' 'lint_b' '--ignored_lints lint_b'
       End
 
       It "takes what gets typed for $1 over what the repo has now"
@@ -323,7 +327,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The contents of file "${CALLS}" should not include 'gum '
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a'
     End
   End
 

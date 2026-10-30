@@ -25,6 +25,9 @@ vars:
   python:
     type: boolean
     description: Whether the ci caller gets the python-min-coverage input.
+  ignored_lints:
+    type: string
+    description: The ignored-lints input of dartender's ci.yml.
   # Its tags in lint-checks.json sit inline, since mason leaves a blank line for a tag on its own.
   shellcheck:
     type: boolean

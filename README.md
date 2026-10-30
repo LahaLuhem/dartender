@@ -60,6 +60,7 @@ has now. Enter takes the starting answer:
 | The lowest line coverage that passes | The same |
 | Globs to leave out of coverage, besides generated code | The same |
 | The lowest coverage for `benchmark/python`'s tests, 0 for none, where there's one | The same |
+| Lints for CI's Analyze to ignore, see [The analyzer](#the-analyzer) | The same |
 | The shell scripts for ShellCheck | What ShellCheck checks now, or else `scripts/*.sh` when there's no `lint-checks.json` yet and that finds any |
 | Write `dependabot.yml`? | Yes |
 | Set the ruleset, labels and merge settings on GitHub? | Yes |
@@ -253,6 +254,11 @@ linter:
 `setup.sh` doesn't write any of this. Where `pubspec.lock` isn't tracked, as at a package's root,
 the next CI run takes whatever `main` has. A tracked one, like an example's, keeps its revision
 until Dependabot's weekly bump.
+
+A lint CI should let through goes in the setup's answer for it, like
+`deprecated_member_use_from_same_package` while a package's own code and tests still use what it
+deprecates. The `ci` caller passes it as `ignored-lints`, and CI ignores it in its own copy of the
+root `analysis_options.yaml`, so the IDE still flags it.
 
 ### The linters
 

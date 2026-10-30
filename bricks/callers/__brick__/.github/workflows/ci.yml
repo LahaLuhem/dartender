@@ -22,3 +22,4 @@ jobs:
       min-coverage: {{min_coverage}}
       coverage-excludes: "{{{coverage_excludes}}}"{{#python}}
       python-min-coverage: {{python_min_coverage}}{{/python}}
+      ignored-lints: "{{{ignored_lints}}}"

@@ -43,6 +43,9 @@ jobs:
       coveralls: false
       # Low, so the Python fixture's pytest runs with the gate on.
       python-min-coverage: 1
+      # dart_package's own test uses what it deprecates at 1.0.0, which these flag.
+      ignored-lints: >-
+        deprecated_member_use_from_same_package remove_deprecations_in_breaking_versions
 
   publish:
     strategy:
