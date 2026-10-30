@@ -2,7 +2,7 @@
 FROM mikefarah/yq:4.54.1 AS yq
 FROM ghcr.io/jqlang/jq:1.8.2 AS jq
 FROM ghcr.io/charmbracelet/gum:v2.0.2 AS gum
-FROM dart:3.13.5 AS dart
+FROM dart:3.13.6 AS dart
 FROM debian:13.7-slim
 
 # gh the way its docs install it on Debian, since Debian's own is years behind.
