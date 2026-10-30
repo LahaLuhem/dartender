@@ -108,10 +108,11 @@ have to pass.
 <details>
 <summary>What happens under the hood</summary>
 
-`setup.sh` builds the `dartender-setup` image from [`scripts/setup/Dockerfile`](scripts/setup/Dockerfile)
-and runs [`inside.sh`](scripts/setup/inside.sh) in it. The clone comes in as the working folder,
-dartender's scripts come in read-only, so a cached image never runs old ones, and your gh token
-comes in as `GH_TOKEN`.
+`setup.sh` builds the `dartender-setup` image from
+[`scripts/setup/Dockerfile`](scripts/setup/Dockerfile) and runs
+[`inside.sh`](scripts/setup/inside.sh) in it. The clone comes in as the working folder, dartender's
+scripts come in read-only, so a cached image never runs old ones, and your gh token comes in as
+`GH_TOKEN`.
 
 `inside.sh` asks its questions with [gum](https://github.com/charmbracelet/gum), then has
 [`callers.sh`](scripts/setup/callers.sh) fill in the templates with
@@ -316,13 +317,13 @@ Every package repo runs whatever is on `main`, so `main` only moves through PRs 
 `self-test-ok`. That's also why the workflows reach their own actions with `$/`: it pins them to
 the commit being run, so a PR tests its own version of everything.
 
-The shared `analysis_options.yaml` has to turn every lint the newest stable Flutter's Dart has on
-or off, and name none it has deprecated or removed. The analyzer only warns about those in a
-package's own file, never in one it includes, so the repos would never hear of them. The self-test
-checks it on every PR and weekly, which is how a new Flutter's lints turn up here. Turning a lint
-on reaches every repo's next CI run, so one that flags anything there turns that repo red until
-it's fixed. To see what it flags first, turn it on under the include in a repo's own file. Every free
-Dart and Flutter rule DCM has needs deciding too, which the self-test checks against
+The shared `analysis_options.yaml` has to turn every lint the newest stable Flutter's Dart has on or
+off, and name none it has deprecated or removed. The analyzer only warns about those in a package's
+own file, never in one it includes, so the repos would never hear of them. The self-test checks it
+on every PR and weekly, which is how a new Flutter's lints turn up here. Turning a lint on reaches
+every repo's next CI run, so one that flags anything there turns that repo red until it's fixed. To
+see what it flags first, turn it on under the include in a repo's own file. Every free Dart and
+Flutter rule DCM has needs deciding too, which the self-test checks against
 [dcm.dev's list](https://dcm.dev/docs/rules/?plan=free).
 
 Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.md).

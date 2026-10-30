@@ -43,8 +43,8 @@ a real package repo.
 
 ## Brick templates
 
-The callers in [`bricks/callers/`](bricks/callers/), which [mason](https://github.com/felangel/mason)
-fills in.
+The callers in [`bricks/callers/`](bricks/callers/), which
+[mason](https://github.com/felangel/mason) fills in.
 
 - **`{{{ }}}` for strings.** `{{ }}` escapes them for HTML, so `lib/a` would come out as
   `lib&#x2F;a`.

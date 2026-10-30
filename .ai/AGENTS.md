@@ -1,6 +1,6 @@
-Notes for AI agents. What dartender is and how it's laid out is in the [README](../README.md), and the
-style for the shell, specs, comments and prose is in [CODESTYLE.md](../CODESTYLE.md). Read both before
-changing anything.
+Notes for AI agents. What dartender is and how it's laid out is in the [README](../README.md), and
+the style for the shell, specs, comments and prose is in [CODESTYLE.md](../CODESTYLE.md). Read both
+before changing anything.
 
 ## Writing
 
