@@ -168,11 +168,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # Its `flutter pub get` resolves the example as well.
       - uses: $/actions/setup-flutter
         with:
           working-directory: ${{ inputs.working-directory }}
+      # Global, so a repo needs no dev dependency on it.
+      - run: dart pub global activate dependency_validator
       - working-directory: ${{ inputs.working-directory }}
-        run: dart run dependency_validator
+        run: dependency_validator
+      # Also after the root fails, so both get checked.
+      - if: ${{ !cancelled() && needs.plan.outputs.example == 'true' }}
+        working-directory: ${{ inputs.working-directory }}/example
+        run: dependency_validator
 
   dartdoc:
     name: Dartdoc
@@ -218,22 +225,6 @@ jobs:
           file: ${{ inputs.working-directory }}/coverage/lcov.info
           format: lcov
           fail-on-error: true
-
-  example-dependencies:
-    name: Dependency validator (example)
-    needs: plan
-    if: needs.plan.outputs.example == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      # At the root, since its `flutter pub get` resolves the example too.
-      - uses: $/actions/setup-flutter
-        with:
-          working-directory: ${{ inputs.working-directory }}
-      - working-directory: ${{ inputs.working-directory }}/example
-        run: dart run dependency_validator
 
   example-test:
     name: Tests (example)
@@ -354,7 +345,6 @@ jobs:
       - dependencies
       - dartdoc
       - test
-      - example-dependencies
       - example-test
       - example-android
       - python-lint
@@ -376,7 +366,6 @@ jobs:
             dependencies=${{ needs.dependencies.result }}
             dartdoc=${{ needs.dartdoc.result }}
             test=${{ needs.test.result }}
-            example-dependencies=${{ needs.example-dependencies.result }}
             example-test=${{ needs.example-test.result }}
             example-android=${{ needs.example-android.result }}
             python-lint=${{ needs.python-lint.result }}
