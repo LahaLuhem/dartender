@@ -16,6 +16,11 @@ runs:
         working-directory: ${{ inputs.working-directory }}
         enable-cache: auto
         cache-dependency-glob: uv.lock
+        restore-cache: true
+        # Only the default branch saves, see the README's Calling it.
+        save-cache: >-
+          ${{ !(github.event.repository != null
+          && github.ref_name != github.event.repository.default_branch) }}
 
     - shell: bash
       working-directory: ${{ inputs.working-directory }}
