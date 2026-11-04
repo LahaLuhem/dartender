@@ -11,3 +11,7 @@ runs:
         java-package: jdk
         set-default: true
         cache: gradle
+        # Only the default branch saves, see the README's Calling it.
+        cache-read-only: >-
+          ${{ github.event.repository != null
+          && github.ref_name != github.event.repository.default_branch }}

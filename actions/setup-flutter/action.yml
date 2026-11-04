@@ -1,5 +1,5 @@
 name: Setup Flutter
-description: Installs Flutter stable with its pub cache, then gets the package's dependencies.
+description: Installs Flutter stable with its SDK and pub caches, then the package's dependencies.
 
 inputs:
   working-directory:
@@ -13,11 +13,56 @@ runs:
   using: composite
   steps:
     # Pure Dart packages get Flutter too, so format and analyze see the same Dart in every repo.
+    # subosito saves from any branch, so here it only works out the keys and paths.
+    - id: flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        dry-run: true
+        cache: false
+        pub-cache: false
+
+    # Only the default branch saves, see the README's Calling it. The test is setup-gradle's
+    # default for cache-read-only.
+    - id: branch
+      shell: bash
+      env:
+        READ_ONLY: >-
+          ${{ github.event.repository != null
+          && github.ref_name != github.event.repository.default_branch }}
+      run: echo "read-only=$READ_ONLY" >> "$GITHUB_OUTPUT"
+
+    - if: steps.branch.outputs.read-only == 'false'
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.flutter.outputs.CACHE-PATH }}
+        key: ${{ steps.flutter.outputs.CACHE-KEY }}
+    - if: steps.branch.outputs.read-only == 'true'
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ steps.flutter.outputs.CACHE-PATH }}
+        key: ${{ steps.flutter.outputs.CACHE-KEY }}
+
+    # subosito's own key, so the entries the default branch already has keep hitting.
+    - if: steps.branch.outputs.read-only == 'false'
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.flutter.outputs.PUB-CACHE-PATH }}
+        key: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
+    - if: steps.branch.outputs.read-only == 'true'
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ steps.flutter.outputs.PUB-CACHE-PATH }}
+        key: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
+
+    # The dry run's version, so it uses the SDK just restored even if a release lands in between.
     - uses: subosito/flutter-action@v2
       with:
         channel: stable
-        cache: true
-        pub-cache: true
+        flutter-version: ${{ steps.flutter.outputs.VERSION }}
+        dry-run: false
+        cache: false
+        pub-cache: false
 
     - if: inputs.pub-get == 'true'
       shell: bash

@@ -170,7 +170,9 @@ merges Dependabot's PRs on the spot instead of waiting for CI. A run that says y
 care of that.
 
 A repo's own workflow can use the setup actions here too, after its checkout, like
-`uses: LahaLuhem/dartender/actions/setup-flutter@main`.
+`uses: LahaLuhem/dartender/actions/setup-flutter@main`. Only the default branch saves their
+caches. Every other run, a PR's included, restores the default branch's and saves nothing, since a
+cache saved anywhere else serves only its own branch while counting toward the repo's cache limit.
 
 ## Releasing
 
@@ -291,7 +293,7 @@ passes.
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
-| `actions/setup-flutter/` | Flutter stable with its pub cache, then `flutter pub get` unless `pub-get` is false |
+| `actions/setup-flutter/` | Flutter stable with its SDK and pub caches, then `flutter pub get` unless `pub-get` is false |
 | `actions/setup-python-uv/` | uv with its cache, then `uv sync --frozen` for the project's Python and locked dependencies |
 | `actions/setup-java/` | The JDK for Flutter's Android builds, with the Gradle caches |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
