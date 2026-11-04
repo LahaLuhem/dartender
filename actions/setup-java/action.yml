@@ -1,0 +1,13 @@
+name: Setup Java
+description: Installs the JDK for Flutter's Android builds, with the Gradle caches.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: "17"
+        java-package: jdk
+        set-default: true
+        cache: gradle
