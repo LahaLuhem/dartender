@@ -43,17 +43,20 @@ runs:
         path: ${{ steps.flutter.outputs.CACHE-PATH }}
         key: ${{ steps.flutter.outputs.CACHE-KEY }}
 
-    # subosito's own key, so the entries the default branch already has keep hitting.
+    # subosito's own key, so the entries the default branch already has keep hitting. A changed
+    # lockfile falls back to the newest entry for this Flutter.
     - if: steps.branch.outputs.read-only == 'false'
       uses: actions/cache@v6
       with:
         path: ${{ steps.flutter.outputs.PUB-CACHE-PATH }}
         key: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}
     - if: steps.branch.outputs.read-only == 'true'
       uses: actions/cache/restore@v6
       with:
         path: ${{ steps.flutter.outputs.PUB-CACHE-PATH }}
         key: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: ${{ steps.flutter.outputs.PUB-CACHE-KEY }}
 
     # The dry run's version, so it uses the SDK just restored even if a release lands in between.
     - uses: subosito/flutter-action@v2
