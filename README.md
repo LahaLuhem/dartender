@@ -16,6 +16,7 @@ small files of its own, plus some settings on GitHub that the jobs count on, and
 |---|---|
 | The caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml`, `changelog.yml` and `release.yml` from here, see [Calling it](#calling-it) |
 | `analysis_options.yaml`, and `dartender_lints` in the dev dependencies | The analyzer's settings, shared, see [The analyzer](#the-analyzer) |
+| `.fvmrc` | Which Flutter the jobs install |
 | `.github/lint-checks.json` | Which linters run, see [The linters](#the-linters) |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
@@ -293,7 +294,7 @@ passes.
 | `actions/detect/` | Works out what's in a repo, so `ci.yml` only runs what applies |
 | `actions/lint/` | Runs one linter from the [linterpol](https://github.com/LahaLuhem/linterpol) image |
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
-| `actions/setup-flutter/` | Flutter stable with its SDK and pub caches, then `flutter pub get` unless `pub-get` is false |
+| `actions/setup-flutter/` | The Flutter from `.fvmrc` with its SDK and pub caches, then `flutter pub get` unless `pub-get` is false |
 | `actions/setup-python-uv/` | uv with its cache, then `uv sync --frozen` for the project's Python and locked dependencies |
 | `actions/setup-android/` | The JDK for Flutter's Android builds, with the Gradle caches |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |

@@ -1,5 +1,5 @@
 name: Setup Flutter
-description: Installs Flutter stable with its SDK and pub caches, then the package's dependencies.
+description: Installs the Flutter from .fvmrc with its SDK and pub caches, then the dependencies.
 
 inputs:
   working-directory:
@@ -18,6 +18,8 @@ runs:
       uses: subosito/flutter-action@v2
       with:
         channel: stable
+        # One Flutter per repo, so the root's file, not the package folder's.
+        flutter-version-file: .fvmrc
         dry-run: true
         cache: false
         pub-cache: false
