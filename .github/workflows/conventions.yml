@@ -9,10 +9,10 @@ permissions:
 jobs:
   branch:
     name: Branch name
-    # Dependabot picks its own branch names, and dartender doesn't name branches after issues.
+    # Bots pick their own branch names, and dartender doesn't name branches after issues.
     # The PR's author, not the actor, so someone labelling a bot PR doesn't turn this back on.
     if: >-
-      github.event.pull_request.user.login != 'dependabot[bot]'
+      !endsWith(github.event.pull_request.user.login, '[bot]')
       && github.repository != 'LahaLuhem/dartender'
     runs-on: ubuntu-latest
     steps:
@@ -54,10 +54,10 @@ jobs:
             branch=${{ needs.branch.result }}
             commits=${{ needs.commits.result }}
         run: echo "$RESULTS"
-      # Right before the verdict, since labels can change while the other jobs run. Dependabot and
+      # Right before the verdict, since labels can change while the other jobs run. Bots and
       # dartender don't use sem-* labels.
       - if: >-
-          github.event.pull_request.user.login != 'dependabot[bot]'
+          !endsWith(github.event.pull_request.user.login, '[bot]')
           && github.repository != 'LahaLuhem/dartender'
         uses: $/actions/sem-label
         with:

@@ -19,8 +19,8 @@ else
   title="$(jq -r .title <<< "${merged}")"
   author="$(jq -r .user.login <<< "${merged}")"
   who="#${number}"
-  if [[ ${author} == 'dependabot[bot]' ]]; then
-    echo "${who} is Dependabot's, and its line gets written at release time." >&2
+  if [[ ${author} == *'[bot]' ]]; then
+    echo "${who} is a bot's, so there's no line to write." >&2
     exit 0
   fi
   # The conventions gate's own check, which reads the labels fresh.

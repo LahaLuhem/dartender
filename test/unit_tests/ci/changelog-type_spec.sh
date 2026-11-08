@@ -65,13 +65,21 @@ Describe 'ci/changelog-type.sh'
     The error should include 'sem-skip'
   End
 
-  It "writes nothing for Dependabot's PRs, whose lines come at release time"
-    PULLS="[$(pull 7 "${SHA}" 'dependabot[bot]')]"
-    export PULLS LABELS=''
-    When run script "${script}"
-    The status should be success
-    The output should be blank
-    The error should include 'Dependabot'
+  Describe "a bot's PR, which carries no sem-* label"
+    Parameters
+      dependabot
+      renovate
+      lahaluhem-ci-bot
+    End
+
+    It "writes nothing for a $1[bot] PR, and says so"
+      PULLS="[$(pull 7 "${SHA}" "$1[bot]")]"
+      export PULLS LABELS=''
+      When run script "${script}"
+      The status should be success
+      The output should be blank
+      The error should include '#7'
+    End
   End
 
   Describe 'a commit no PR merged, like a release commit'
