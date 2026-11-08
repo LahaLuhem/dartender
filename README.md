@@ -9,14 +9,14 @@ A bartender for Dart: one bar, serves every pub the same drinks the same pour.
 
 The jobs live here, and every package repo runs them from `main`. A package repo keeps only a few
 small files of its own, plus some settings on GitHub that the jobs count on, and
-[`setup.sh`](#setting-up-a-repo) makes all of them but the analyzer's, which
-[go in by hand](#the-analyzer).
+[`setup.sh`](#setting-up-a-repo) makes all of them but `.fvmrc` and
+[the analyzer's](#the-analyzer), which go in by hand.
 
 | In a package repo | What it's for |
 |---|---|
 | The caller workflows in `.github/workflows/` | Run `ci.yml`, `conventions.yml`, `publish.yml`, `changelog.yml` and `release.yml` from here, see [Calling it](#calling-it) |
 | `analysis_options.yaml`, and `dartender_lints` in the dev dependencies | The analyzer's settings, shared, see [The analyzer](#the-analyzer) |
-| `.fvmrc` | Which Flutter the jobs install |
+| `.fvmrc` | Which Flutter the jobs install, like `{"flutter": "stable"}` |
 | `.github/lint-checks.json` | Which linters run, see [The linters](#the-linters) |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
