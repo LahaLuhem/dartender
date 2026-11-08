@@ -52,7 +52,7 @@ jobs:
       example-tests: ${{ steps.detect.outputs.example-tests }}
       dependabot: ${{ steps.detect.outputs.dependabot }}
       python: ${{ steps.detect.outputs.python }}
-      # Only a PR skips jobs, since every other run writes the caches PRs restore from.
+      # Other runs write the caches PRs restore from.
       android-changed: >-
         ${{ github.event_name != 'pull_request'
         || steps.changes.outputs.android == 'true' }}
