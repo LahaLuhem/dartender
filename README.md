@@ -295,7 +295,7 @@ passes.
 | `actions/check-inputs/` | Fails on a `with:` key the action or workflow behind `uses:` doesn't take |
 | `actions/setup-flutter/` | Flutter stable with its SDK and pub caches, then `flutter pub get` unless `pub-get` is false |
 | `actions/setup-python-uv/` | uv with its cache, then `uv sync --frozen` for the project's Python and locked dependencies |
-| `actions/setup-java/` | The JDK for Flutter's Android builds, with the Gradle caches |
+| `actions/setup-android/` | The JDK for Flutter's Android builds, with the Gradle caches |
 | `actions/branch-name/` | Fails on a PR branch that isn't named `<type>/#<issue>-<name>` |
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or an overlong commit subject |
 | `actions/sem-label/` | Fails unless the PR has exactly one `sem-*` label, read fresh from the API |

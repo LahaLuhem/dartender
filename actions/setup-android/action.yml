@@ -1,4 +1,4 @@
-name: Setup Java
+name: Setup Android
 description: Installs the JDK for Flutter's Android builds, with the Gradle caches.
 
 runs:
