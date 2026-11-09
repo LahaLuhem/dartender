@@ -8,7 +8,7 @@ Describe 'ci/release.sh'
     root="$(mktemp -d "${SHELLSPEC_TMPBASE}/repo.XXXXXX")"
     # Not pub_lists, which would put its dart ahead of the mock below that hands it the listing.
     export ROOT="${root}" ORIGIN="${root}.origin" CALLS="${root}.calls" \
-      LISTER="${SHELLSPEC_PROJECT_ROOT}/test/utils/pub/dart" LISTED='' PUB_FAILS='' \
+      LISTER="${SHELLSPEC_PROJECT_ROOT}/test/fakes/pub/dart" LISTED='' PUB_FAILS='' \
       BUMP=minor PACKAGE='' REPO=owner/repo BRANCH=main REF=refs/heads/main DRY_RUN=false \
       TITLES='' PUSH_TOKEN=app-token GH_TOKEN=job-token ACTOR=a-person ACTOR_ID=7 NEXT=1.1.0 \
       PUBLISH_RC=0 GITHUB_STEP_SUMMARY="${root}.summary"

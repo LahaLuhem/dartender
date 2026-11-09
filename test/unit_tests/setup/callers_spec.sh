@@ -1,8 +1,8 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/repo.sh
-Include test/utils/gh.sh
-Include test/utils/pub.sh
+Include test/support/repo.sh
+Include test/fakes/gh.sh
+Include test/fakes/pub.sh
 
 # mason only runs in the setup image, so this covers what callers.sh hands it and makes of the answer.
 Describe 'setup/callers.sh'

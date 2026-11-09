@@ -3,7 +3,7 @@
 
 fresh_gh() {
   dir="$(mktemp -d "${SHELLSPEC_TMPBASE}/gh.XXXXXX")"
-  export PATH="${SHELLSPEC_PROJECT_ROOT}/test/utils/bin:${PATH}" \
+  export PATH="${SHELLSPEC_PROJECT_ROOT}/test/fakes/bin:${PATH}" \
     CALLS="${dir}/calls" BRICKS="${dir}/bricks" \
     BODY="${dir}/body.json" SETTINGS_BODY="${dir}/settings.json" \
     RULESETS='[]' RULESET='{}' LABELS='[]' SETTINGS='{}' FAIL_ON='' DECLINE_ON='' ABORT_ON='' \

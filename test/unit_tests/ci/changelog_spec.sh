@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/pub.sh
+Include test/fakes/pub.sh
 
 Describe 'ci/changelog.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/ci/changelog.sh"

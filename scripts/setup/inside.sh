@@ -69,7 +69,7 @@ fi
 repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 info "Setting up ${repo}"
 # Before dependabot.sh, which then watches the callers and stops without a lint-checks.json.
-ask "Write the callers and lint-checks.json in .github?"
+ask "Write the callers, lint-checks.json and renovate.json?"
 if [[ ${answer} == true ]]; then
   coveralls="$(caller_value coveralls)"
   ask "Upload coverage to Coveralls?" "${coveralls}"

@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/gh.sh
+Include test/fakes/gh.sh
 
 Describe 'setup/apply.sh'
   apply="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/apply.sh"

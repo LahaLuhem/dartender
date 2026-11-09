@@ -8,7 +8,7 @@ Describe 'ci/dartdoc.sh'
     cd "${repo}" || return
     # Not pub_lists, which would put its dart ahead of the mock below that hands it the listing.
     export ROOT="${repo}" DOCUMENTED="${repo}.documented" OUTCOMES='' LISTED='' PUB_FAILS='' \
-      LISTER="${SHELLSPEC_PROJECT_ROOT}/test/utils/pub/dart"
+      LISTER="${SHELLSPEC_PROJECT_ROOT}/test/fakes/pub/dart"
     : > "${DOCUMENTED}"
   }
   BeforeEach 'setup'

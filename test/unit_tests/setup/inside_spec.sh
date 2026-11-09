@@ -1,8 +1,8 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/repo.sh
-Include test/utils/gh.sh
-Include test/utils/pub.sh
+Include test/support/repo.sh
+Include test/fakes/gh.sh
+Include test/fakes/pub.sh
 
 # The scripts it runs have specs of their own, so this covers what chaining them can break.
 Describe 'setup/inside.sh'

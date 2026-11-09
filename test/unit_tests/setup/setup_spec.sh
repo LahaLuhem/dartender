@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/repo.sh
-Include test/utils/gh.sh
+Include test/support/repo.sh
+Include test/fakes/gh.sh
 
 # What runs inside the container has a spec of its own, inside_spec.sh, so this covers the handover.
 Describe 'setup/setup.sh'

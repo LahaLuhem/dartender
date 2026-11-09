@@ -57,7 +57,7 @@ has now. Enter takes the starting answer:
 
 | It asks | Starting from |
 |---|---|
-| Write the callers and `lint-checks.json`? | Yes |
+| Write the callers, `lint-checks.json` and `renovate.json`? | Yes |
 | Upload coverage to Coveralls? | What the `ci` caller passes now, or else `ci.yml`'s default |
 | The lowest line coverage that passes | The same |
 | Globs to leave out of coverage, besides generated code | The same |
@@ -78,8 +78,9 @@ repo's older ruleset, if it has one, since nothing runs that one's required chec
 
 | What | Where | Taken from |
 |---|---|---|
-| The `ci`, `conventions`, `publish`, `changelog` and `release` callers | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), your answers, and the packages the repo publishes |
+| The `ci`, `conventions`, `publish`, `changelog` and `release` callers, plus `codegen` where the repo has a `.github/codegen.json` | `.github/workflows/`, for you to commit | The templates in [`bricks/callers/`](bricks/callers/), your answers, and the packages the repo publishes |
 | `lint-checks.json` | `.github/`, for you to commit | The same |
+| `renovate.json`, which keeps `.fvmrc` current | the repo root, for you to commit | The same |
 | `dependabot.yml`, a weekly block for each folder Dependabot has to watch | `.github/`, for you to commit | The repo's files, new ones included |
 | The `dartender` ruleset, which requires `ci / ok` and `conventions / ok` and lets the changelog App past | GitHub | [`protected.example.json`](scripts/setup/protected.example.json) |
 | The `sem-*` labels, one per changelog section | GitHub | [`sem-labels.json`](scripts/sem-labels.json) |
@@ -309,12 +310,13 @@ passes.
 | `actions/changelog-type/` | Finds the PR a pushed commit came from, and the changelog section its line goes under |
 | `actions/changelog/` | Adds that line with cider to each package the PR changed, and commits each through the contents API |
 | `actions/release/` | Writes Dependabot's lines, bumps and dates the release, commits it as whoever started the run, and pushes commit and tag together |
-| `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers and `lint-checks.json` |
+| `bricks/callers/` | The templates `setup.sh` fills in for a package repo: its callers, `lint-checks.json` and `renovate.json` |
 | `lints/` | The `dartender_lints` package, whose `analysis_options.yaml` every package repo includes, see [The analyzer](#the-analyzer) |
 | `scripts/` | The shell the actions run, and the `sem-*` labels in `sem-labels.json` |
 | `scripts/setup/` | `setup.sh`, the image it runs in, and what runs there, see [Setting up a repo](#setting-up-a-repo) |
 | `test/unit_tests/` | A spec for each script |
-| `test/utils/` | What the specs share, like stand-ins for `gh` and `docker` |
+| `test/fakes/` | Stand-ins for `gh`, `docker`, `gum`, `mason` and `dart`, and the switches that drive them |
+| `test/support/` | What else the specs share, like the throwaway git repos they run against |
 | `test/workflow_tests/` | Packages laid out like the real repos, which the self-test runs the workflows against |
 
 ## Specs

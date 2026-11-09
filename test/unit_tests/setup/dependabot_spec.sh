@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2154  # ShellSpec sets the SHELLSPEC_* variables
-Include test/utils/repo.sh
+Include test/support/repo.sh
 
 Describe 'setup/dependabot.sh'
   script="${SHELLSPEC_PROJECT_ROOT}/scripts/setup/dependabot.sh"
