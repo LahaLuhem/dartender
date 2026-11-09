@@ -42,6 +42,22 @@ if [[ -d benchmark/python ]]; then
 fi
 echo "python=${python}"
 
+# Optional: a repo with nothing to generate has no manifest.
+codegen=false
+generators=.github/codegen.json
+if [[ -f ${generators} ]]; then
+  valid='(.steps | length > 0) and all(.steps[];
+    (.name | type == "string" and length > 0) and (.cmd | type == "string" and test("\\S"))
+    and ((.folder // ".") | type == "string" and test("\\S")))'
+  if ! jq -e "${valid}" "${generators}" >/dev/null 2>&1; then
+    echo "::error::${generators} is malformed or empty. It needs at least one step, each with a" \
+      "\"name\" and a \"cmd\", and an optional \"folder\"." >&2
+    exit 1
+  fi
+  codegen=true
+fi
+echo "codegen=${codegen}"
+
 # New files count too, so setup.sh's dependabot.yml covers the callers written in the same run.
 files="$(git ls-files --cached --others --exclude-standard)"
 watched=''
@@ -85,6 +101,10 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   if [[ "${example_tests}" == true ]]; then shown="with tests"; elif [[ "${example}" == true ]]; then shown="without tests"; fi
   python_shown=none
   if [[ "${python}" == true ]]; then python_shown="\`benchmark/python\`"; fi
+  codegen_shown=none
+  if [[ "${codegen}" == true ]]; then
+    codegen_shown="$(jq -r '[.steps[].name] | join(", ")' "${generators}")"
+  fi
   cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
 ### What dartender found
 | What | Found |
@@ -92,6 +112,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
 | Package | ${kind} |
 | Example | ${shown} |
 | Python | ${python_shown} |
+| Codegen | ${codegen_shown} |
 | Linters | ${names} |
 | Lint image | \`${image}\` |
 | Dependabot | ${watching:-none} |
