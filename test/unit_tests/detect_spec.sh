@@ -227,6 +227,92 @@ Describe 'detect.sh'
     End
   End
 
+  Describe 'the generator packages a repo pins'
+    owns() {
+      local line actual want
+      line="$(grep '^generators=')" || return 1
+      actual="$(jq -r '.[] | "\(.directory) \(.packages | join(","))"' <<< "${line#generators=}")" \
+        || return 1
+      actual="$(sort <<< "${actual}")"
+      want="$(printf '%s\n' "$@" | sort)"
+      [[ "${actual}" == "${want}" ]]
+    }
+
+    dev() { track "$1" "$2" "$(printf 'name: a\ndev_dependencies:\n  %s\n' "$3")"; }
+
+    It 'owns one held at an exact version'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      dev "${r}" pubspec.yaml 'pigeon: 29.1.0'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns '/ pigeon'
+    End
+
+    It 'owns a pre-release pin, which is exact too'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      dev "${r}" pubspec.yaml 'pigeon: 29.1.0-beta.1'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns '/ pigeon'
+    End
+
+    Describe 'a constraint Dependabot can still move'
+      Parameters
+        'a caret' '"^2.17.1"'
+        'a range' '">=1.0.0 <2.0.0"'
+        'any' 'any'
+        'nothing at all' ''
+      End
+
+      It "leaves out $1"
+        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+        dev "${r}" pubspec.yaml "build_runner: $2"
+        When run script scripts/detect.sh "${r}"
+        The output should satisfy owns
+      End
+    End
+
+    It 'leaves out a path dependency, which has no version to hold'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\ndev_dependencies:\n  lints:\n    path: ../lints\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns
+    End
+
+    It 'leaves out a regular dependency, since only a dev one generates code'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\ndependencies:\n  meta: 1.9.9\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns
+    End
+
+    It "keeps an example's pin on the example's own block"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\n'
+      dev "${r}" example/pubspec.yaml 'flutter_gen_runner: 5.15.0'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns '/example flutter_gen_runner'
+    End
+
+    It "sends a workspace member's pin to the root, the only block pub updates"
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml $'name: a\nworkspace:\n  - packages/b\n'
+      track "${r}" packages/b/pubspec.yaml \
+        $'name: b\nresolution: workspace\ndev_dependencies:\n  mockito: 5.8.1\n'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns '/ mockito'
+    End
+
+    It 'lists each folder once, with the pins that belong to it'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      track "${r}" pubspec.yaml \
+        $'name: a\ndev_dependencies:\n  pigeon: 29.1.0\n  copy_with_extension_gen: 7.0.0\n'
+      dev "${r}" example/pubspec.yaml 'flutter_gen_runner: 5.15.0'
+      When run script scripts/detect.sh "${r}"
+      The output should satisfy owns '/ copy_with_extension_gen,pigeon' \
+        '/example flutter_gen_runner'
+    End
+  End
+
+
   Describe 'the package'
     Parameters
       'no package' '' 'package=false' 'flutter=false' 'none'
