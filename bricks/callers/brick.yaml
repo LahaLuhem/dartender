@@ -41,3 +41,6 @@ vars:
   packages:
     type: list
     description: The packages that publish, for the release caller to offer.
+  codegen:
+    type: boolean
+    description: Whether the repo gets the codegen caller.

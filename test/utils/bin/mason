@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2154  # fresh_gh exports what this reads
 echo "mason $*" >> "${CALLS}"
-if [[ $1 != make ]]; then exit 0; fi
+if [[ $1 != make ]]; then
+  prev=''
+  for arg; do
+    # The staged copy is gone before a spec can look, so the name gets taken while it is there.
+    if [[ ${prev} == --path && -f "${arg}/brick.yaml" ]]; then
+      sed -n 's/^name: //p' "${arg}/brick.yaml" >> "${BRICKS}"
+    fi
+    prev="${arg}"
+  done
+  exit 0
+fi
 out='' prev=''
 for arg; do
   if [[ ${prev} == --output-dir ]]; then out="${arg}"; fi

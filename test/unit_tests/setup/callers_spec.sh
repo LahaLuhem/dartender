@@ -24,11 +24,7 @@ Describe 'setup/callers.sh'
     grep '^mason make ' "${CALLS}" || :
   }
 
-  adds_the_brick() {
-    local path
-    path="$(sed -n 's/^mason add -g callers --path //p')"
-    [[ -n ${path} ]] && grep -qx 'name: callers' "${path}/brick.yaml"
-  }
+  # By name, since callers.sh stages a copy of the brick and clears it up on the way out.
 
   It "renders dartender's brick into the repo, for the repo's default branch"
     r="$(package_repo)"
@@ -36,7 +32,7 @@ Describe 'setup/callers.sh'
     When run script "${script}" true 95 '' 0 '' '' "${r}"
     The status should be success
     The output should be present
-    The contents of file "${CALLS}" should satisfy adds_the_brick
+    The contents of file "${BRICKS}" should equal callers
     The result of function make_call should include "--output-dir ${r} "
     The result of function make_call should include '--default_branch master '
   End
@@ -47,7 +43,26 @@ Describe 'setup/callers.sh'
     The status should be success
     The output should be present
     The result of function make_call should end with \
-      '--coveralls false --min_coverage 90 --coverage_excludes lib/a.dart lib/b.dart --python_min_coverage 80 --ignored_lints lint_a lint_b'
+      '--coveralls false --min_coverage 90 --coverage_excludes lib/a.dart lib/b.dart --python_min_coverage 80 --ignored_lints lint_a lint_b --codegen false'
+  End
+
+  Describe 'the codegen caller'
+    It 'asks for it in a repo with generators to run'
+      r="$(package_repo)"
+      echo '{"steps":[{"name":"a","cmd":"a"}]}' > "${r}/.github/codegen.json"
+      When run script "${script}" true 95 '' 0 '' '' "${r}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--codegen true'
+    End
+
+    It 'leaves it out of a repo with none, which post_gen.dart then deletes'
+      r="$(package_repo)"
+      When run script "${script}" true 95 '' 0 '' '' "${r}"
+      The status should be success
+      The output should be present
+      The result of function make_call should include '--codegen false'
+    End
   End
 
   It 'hands mason the shell scripts for ShellCheck'

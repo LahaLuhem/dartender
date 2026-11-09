@@ -31,15 +31,23 @@ if [[ ${#published[@]} -gt 1 ]]; then workspace=true; fi
 # shellcheck disable=SC2016  # a jq program, whose $ARGS is a jq variable
 packages="$(jq -cn '$ARGS.positional' --args "${published[@]}")"
 
+# post_gen.dart takes the caller back out where this is false.
+codegen=false
+if [[ -f "${repo}/.github/codegen.json" ]]; then codegen=true; fi
+
+# mason writes the hook's lockfile into the brick, and setup.sh mounts dartender read-only.
+staged="$(mktemp -d)"
+trap 'rm -rf "${staged}"' EXIT
+cp -r "${here}/../../bricks/callers" "${staged}/callers"
 # Global, so mason leaves no mason.yaml in the repo.
-mason add -g callers --path "${here}/../../bricks/callers" > /dev/null
+mason add -g callers --path "${staged}/callers" > /dev/null
 rc=0
 out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-exit-if-changed \
   --shellcheck "${shellcheck}" --shellcheck_paths "${shellcheck_paths}" --python "${python}" \
   --workspace "${workspace}" --packages "${packages}" \
   --default_branch "${branch}" --coveralls "${coveralls}" --min_coverage "${min_coverage}" \
   --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
-  --ignored_lints "${ignored_lints}" 2>&1)" || rc=$?
+  --ignored_lints "${ignored_lints}" --codegen "${codegen}" 2>&1)" || rc=$?
 case "${rc}" in
   0) success "The callers, lint-checks.json and renovate.json in ${repo} are already up to date" ;;
   # What --set-exit-if-changed exits with when it changed a file.

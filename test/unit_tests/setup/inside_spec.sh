@@ -143,7 +143,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The line 1 of result of function asked should include 'callers'
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a --codegen false'
     End
 
     It "falls back to ci.yml's own defaults for a repo without a ci caller"
@@ -160,7 +160,7 @@ Describe 'setup/inside.sh'
       The status should be success
       The output should be present
       The result of function make_call should end with \
-        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints}"
+        "--coveralls ${coveralls} --min_coverage ${min_coverage} --coverage_excludes ${excludes} --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints} --codegen false"
     End
 
     It "falls back to ci.yml's own default for an input the ci caller doesn't pass yet, quietly"
@@ -178,7 +178,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The stderr should be blank
       The result of function make_call should end with \
-        "--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints}"
+        "--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage ${python_min_coverage} --ignored_lints ${ignored_lints} --codegen false"
     End
 
     It "has the same run's dependabot.yml watch the callers it wrote"
@@ -327,7 +327,7 @@ Describe 'setup/inside.sh'
       The output should be present
       The contents of file "${CALLS}" should not include 'gum '
       The result of function make_call should end with \
-        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a'
+        '--coveralls false --min_coverage 90 --coverage_excludes lib/x.dart --python_min_coverage 80 --ignored_lints lint_a --codegen false'
     End
   End
 
