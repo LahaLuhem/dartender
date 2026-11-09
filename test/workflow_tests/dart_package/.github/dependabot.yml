@@ -9,6 +9,8 @@ updates:
       pub:
         patterns: ['*']
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: json_serializable
   - package-ecosystem: uv
     directory: /benchmark/python
     schedule:

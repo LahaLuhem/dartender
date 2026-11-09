@@ -44,14 +44,14 @@ echo "python=${python}"
 
 # Optional: a repo with nothing to generate has no manifest.
 codegen=false
-generators=.github/codegen.json
-if [[ -f ${generators} ]]; then
+codegen_manifest=.github/codegen.json
+if [[ -f ${codegen_manifest} ]]; then
   valid='(.steps | length > 0) and all(.steps[];
     (.name | type == "string" and length > 0) and (.cmd | type == "string" and test("\\S"))
     and ((.folder // ".") | type == "string" and test("\\S")))'
-  if ! jq -e "${valid}" "${generators}" >/dev/null 2>&1; then
-    echo "::error::${generators} is malformed or empty. It needs at least one step, each with a" \
-      "\"name\" and a \"cmd\", and an optional \"folder\"." >&2
+  if ! jq -e "${valid}" "${codegen_manifest}" >/dev/null 2>&1; then
+    echo "::error::${codegen_manifest} is malformed or empty. It needs at least one step," \
+      "each with a \"name\" and a \"cmd\", and an optional \"folder\"." >&2
     exit 1
   fi
   codegen=true
@@ -60,7 +60,7 @@ echo "codegen=${codegen}"
 
 # New files count too, so setup.sh's dependabot.yml covers the callers written in the same run.
 files="$(git ls-files --cached --others --exclude-standard)"
-watched=''
+watched='' pinned=''
 while IFS= read -r file; do
   # --cached still lists a file that's deleted but not committed yet.
   if [[ ! -e "${file}" ]]; then continue; fi
@@ -75,6 +75,12 @@ while IFS= read -r file; do
     */pubspec.yaml)
       resolution="$(yq '.resolution // ""' "${file}")"
       if [[ "${resolution}" != workspace ]]; then ecosystem=pub; fi
+      # An exact pin is how a repo marks a generator, so the codegen job owns its bumps.
+      exact="$(yq -o json '.dev_dependencies // {}' "${file}" | jq -r --arg dir "${dir:-/}" \
+        'to_entries[] | select((.value | type) == "string"
+          and (.value | test("^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.+-]+)?$")))
+        | "\($dir)\t\(.key)"')"
+      if [[ -n "${exact}" ]]; then pinned+="${exact}"$'\n'; fi
       ;;
     */settings.gradle | */settings.gradle.kts) ecosystem=gradle ;;
     */uv.lock) ecosystem=uv ;;
@@ -91,6 +97,23 @@ dependabot="$(jq -R -n -c '[inputs | select(. != "")] | unique
   | map(split("\t") | {"package-ecosystem": .[0], directory: .[1]})' <<< "${watched}")"
 echo "dependabot=${dependabot}"
 
+# A workspace member has no block of its own, so its pins go to the nearest one above it.
+blocks="$(jq -r '.[] | select(."package-ecosystem" == "pub") | .directory' <<< "${dependabot}")"
+owned=''
+while IFS=$'\t' read -r pin_dir pin; do
+  if [[ -z "${pin}" ]]; then continue; fi
+  best=''
+  while IFS= read -r block; do
+    if [[ -z "${block}" ]]; then continue; fi
+    if [[ "${pin_dir}" != "${block}" && "${pin_dir}" != "${block%/}/"* ]]; then continue; fi
+    if [[ ${#block} -gt ${#best} ]]; then best="${block}"; fi
+  done <<< "${blocks}"
+  if [[ -n "${best}" ]]; then owned+="${best}"$'\t'"${pin}"$'\n'; fi
+done <<< "${pinned}"
+generators="$(jq -R -n -c '[inputs | select(. != "") | split("\t")]
+  | group_by(.[0]) | map({directory: .[0][0], packages: (map(.[1]) | unique)})' <<< "${owned}")"
+echo "generators=${generators}"
+
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   names="$(jq -r '[.[].name] | join(", ")' <<< "${checks}")"
   watching="$(jq -r 'map("`\(."package-ecosystem") \(.directory)`") | join(", ")' \
@@ -103,7 +126,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   if [[ "${python}" == true ]]; then python_shown="\`benchmark/python\`"; fi
   codegen_shown=none
   if [[ "${codegen}" == true ]]; then
-    codegen_shown="$(jq -r '[.steps[].name] | join(", ")' "${generators}")"
+    codegen_shown="$(jq -r '[.steps[].name] | join(", ")' "${codegen_manifest}")"
   fi
   cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
 ### What dartender found

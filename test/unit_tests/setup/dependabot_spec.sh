@@ -33,6 +33,12 @@ Describe 'setup/dependabot.sh'
     stat -c %Y "${r}/.github/dependabot.yml"
   }
 
+  ignores() {
+    yq '[.updates[] | select(has("ignore")) | ."package-ecosystem" + " " + .directory + " "
+      + (.ignore | map(."dependency-name") | join(","))] | sort | .[]' \
+      "${r}/.github/dependabot.yml"
+  }
+
   It 'writes a weekly block for each folder and ecosystem Dependabot has to watch'
     r="$(repo "${manifest}")"
     track "${r}" .github/workflows/ci.yml
@@ -95,6 +101,25 @@ Describe 'setup/dependabot.sh'
     The status should be failure
     The stderr should be present
     The contents of file "${r}/.github/dependabot.yml" should equal 'old'
+  End
+
+  It 'tells Dependabot to leave the pinned generators alone, since the codegen job bumps them'
+    r="$(repo "${manifest}")"
+    track "${r}" pubspec.yaml \
+      $'name: a\ndev_dependencies:\n  pigeon: 29.1.0\n  build_runner: "^2.17.1"\n'
+    When run script "${script}" "${r}"
+    The status should be success
+    The output should be present
+    The result of function ignores should equal 'pub / pigeon'
+  End
+
+  It 'writes no ignore list for a repo that pins nothing'
+    r="$(repo "${manifest}")"
+    track "${r}" pubspec.yaml
+    When run script "${script}" "${r}"
+    The status should be success
+    The output should be present
+    The result of function ignores should be blank
   End
 
   # By a relative path, since the script finds detect.sh from where it sits.
