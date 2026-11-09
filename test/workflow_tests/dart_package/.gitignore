@@ -2,6 +2,6 @@
 # Created by `dart pub`
 .dart_tool/
 
-# Avoid committing pubspec.lock for library packages; see
-# https://dart.dev/tools/pub/private-files#pubspec-lock.
-pubspec.lock
+# Committed, unlike in a real library: without one resolution to reproduce, an upstream release
+# moves the generated output and the codegen check goes red for nothing.
+!pubspec.lock

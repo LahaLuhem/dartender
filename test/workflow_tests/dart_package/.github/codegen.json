@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "name": "build_runner", "cmd": "dart run build_runner build" }
+  ]
+}
