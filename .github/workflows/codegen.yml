@@ -43,6 +43,11 @@ env:
 jobs:
   plan:
     name: Plan
+    # workflow_run fires whatever the conclusion. codegen-plan says so too, but only after a
+    # runner has started, and most CI runs are green.
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     # Reading the failed run and its jobs.
     permissions:
