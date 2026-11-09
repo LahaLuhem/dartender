@@ -1,0 +1,47 @@
+name: Codegen plan
+description: Says whether there is drift to repair and on which branch, or that this is a bump.
+
+inputs:
+  event:
+    description: The event that started this, github.event_name.
+    required: true
+  repo:
+    description: The repository, as owner/name.
+    required: true
+  run-id:
+    description: The CI run to look at. Empty on anything but a workflow_run.
+    default: ""
+  default-branch:
+    description: The branch the bump run works from.
+    required: true
+  marker:
+    description: The line this job puts in its own commits, which it then skips over.
+    required: true
+  token:
+    description: A token that can read the run and its jobs.
+    required: true
+
+outputs:
+  go:
+    description: Whether there is anything to do, true or false.
+    value: ${{ steps.plan.outputs.go }}
+  mode:
+    description: Either repair, for drift on a branch, or bump, for the weekly run.
+    value: ${{ steps.plan.outputs.mode }}
+  branch:
+    description: The branch to check out and work on.
+    value: ${{ steps.plan.outputs.branch }}
+
+runs:
+  using: composite
+  steps:
+    - id: plan
+      shell: bash
+      env:
+        EVENT: ${{ inputs.event }}
+        REPO: ${{ inputs.repo }}
+        RUN_ID: ${{ inputs.run-id }}
+        DEFAULT_BRANCH: ${{ inputs.default-branch }}
+        MARKER: ${{ inputs.marker }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/codegen-plan.sh" >> "$GITHUB_OUTPUT"'

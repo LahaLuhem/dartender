@@ -1,0 +1,52 @@
+name: Codegen land
+description: Commits whatever the generators moved, onto the branch it came from or a bump PR.
+
+inputs:
+  mode:
+    description: Either repair, to push onto the branch, or bump, to open a PR.
+    required: true
+  branch:
+    description: The branch to push onto, or the one a bump PR targets.
+    required: true
+  bump-branch:
+    description: The branch a bump PR is pushed to.
+    default: codegen/generator-bumps
+  repo:
+    description: The repository, as owner/name.
+    required: true
+  marker:
+    description: The commit subject, which codegen-plan then skips over.
+    required: true
+  author-name:
+    description: The name on the commit, usually the App's.
+    required: true
+  author-email:
+    description: The address on the commit.
+    required: true
+  token:
+    description: A token that can open a pull request.
+    required: true
+  working-directory:
+    description: Folder of the package.
+    default: .
+  dry-run:
+    description: Shows what would land without pushing it. Only dartender's self-tests set it.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Pushes with whatever the checkout persisted, so the token never reaches a command line.
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        MODE: ${{ inputs.mode }}
+        BRANCH: ${{ inputs.branch }}
+        BUMP_BRANCH: ${{ inputs.bump-branch }}
+        REPO: ${{ inputs.repo }}
+        MARKER: ${{ inputs.marker }}
+        AUTHOR_NAME: ${{ inputs.author-name }}
+        AUTHOR_EMAIL: ${{ inputs.author-email }}
+        GH_TOKEN: ${{ inputs.token }}
+        DRY_RUN: ${{ inputs.dry-run }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/codegen-land.sh"'
