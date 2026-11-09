@@ -93,6 +93,24 @@ jobs:
       title: A line from dartender's self-test
       files: ${{ matrix.files }}
 
+  codegen:
+    strategy:
+      fail-fast: false
+      matrix:
+        # The only fixture with a codegen.json and a pinned generator.
+        fixture: [dart_package]
+    uses: ./.github/workflows/codegen.yml
+    # What codegen.yml's jobs ask for.
+    permissions:
+      contents: read
+      actions: read
+    with:
+      working-directory: test/workflow_tests/${{ matrix.fixture }}
+      # This run's own branch, since the default one has none of its changes.
+      branch: ${{ github.head_ref || github.ref_name }}
+      # Only a real repair can test the push.
+      dry-run: true
+
   release:
     strategy:
       fail-fast: false

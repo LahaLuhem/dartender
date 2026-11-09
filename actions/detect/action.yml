@@ -34,6 +34,9 @@ outputs:
   codegen:
     description: Whether there's a .github/codegen.json to run generators from, true or false.
     value: ${{ steps.detect.outputs.codegen }}
+  generators:
+    description: The dev dependencies pinned exactly, as JSON, grouped by the block that owns them.
+    value: ${{ steps.detect.outputs.generators }}
 
 runs:
   using: composite

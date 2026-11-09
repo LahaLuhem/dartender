@@ -1,0 +1,119 @@
+name: Codegen
+
+on:
+  workflow_call:
+    inputs:
+      app-id:
+        description: The changelog App's ID, which every package repo keeps as its APP_ID variable.
+        type: string
+        default: ""
+      working-directory:
+        description: Folder of the repo's root. Only dartender's self-tests change it.
+        type: string
+        default: .
+      branch:
+        description: >-
+          The branch to work on instead of the one the event points at. Only dartender's
+          self-tests set it.
+        type: string
+        default: ""
+      run-id:
+        description: >-
+          The CI run to read instead of the one the event points at. Only dartender's self-tests
+          set it.
+        type: string
+        default: ""
+      dry-run:
+        description: >-
+          Shows what would land without pushing it. Only dartender's self-tests set it.
+        type: boolean
+        default: false
+    secrets:
+      app-private-key:
+        description: The changelog App's private key, every package repo's APP_PRIVATE_KEY secret.
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  # codegen-land writes it into its commits, and codegen-plan skips over anything carrying it.
+  MARKER: Codegen regen
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    # Reading the failed run and its jobs.
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      go: ${{ steps.plan.outputs.go }}
+      mode: ${{ steps.plan.outputs.mode }}
+      branch: ${{ steps.plan.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - id: plan
+        uses: $/actions/codegen-plan
+        with:
+          event: ${{ github.event_name }}
+          repo: ${{ github.repository }}
+          run-id: ${{ inputs.run-id || github.event.workflow_run.id }}
+          default-branch: ${{ inputs.branch || github.event.repository.default_branch }}
+          marker: ${{ env.MARKER }}
+          token: ${{ github.token }}
+
+  regenerate:
+    name: Regenerate
+    needs: plan
+    if: needs.plan.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # client-id takes the App's ID too, and app-id is deprecated.
+      - if: ${{ !inputs.dry-run }}
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.app-id }}
+          private-key: ${{ secrets.app-private-key }}
+          permission-contents: write
+          permission-pull-requests: write
+      # Credentials stay, against this repo's habit, because codegen-land pushes with them.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.branch }}
+          token: ${{ steps.token.outputs.token || github.token }}
+      - id: detect
+        uses: $/actions/detect
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      # Nothing else proposes these, so the bump run is the only thing that moves them.
+      - if: needs.plan.outputs.mode == 'bump'
+        uses: $/actions/codegen-bump
+        with:
+          generators: ${{ steps.detect.outputs.generators }}
+          working-directory: ${{ inputs.working-directory }}
+      # A repo can pin a generator and still have nothing to generate from it.
+      - if: steps.detect.outputs.codegen == 'true'
+        uses: $/actions/codegen
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: $/actions/codegen-land
+        with:
+          mode: ${{ needs.plan.outputs.mode }}
+          branch: ${{ needs.plan.outputs.branch }}
+          repo: ${{ github.repository }}
+          marker: ${{ env.MARKER }}
+          author-name: ${{ steps.token.outputs.app-slug }}[bot]
+          author-email: ${{ steps.token.outputs.app-slug }}[bot]@users.noreply.github.com
+          token: ${{ steps.token.outputs.token }}
+          working-directory: ${{ inputs.working-directory }}
+          dry-run: ${{ inputs.dry-run }}
