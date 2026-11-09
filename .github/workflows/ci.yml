@@ -52,6 +52,7 @@ jobs:
       example-tests: ${{ steps.detect.outputs.example-tests }}
       dependabot: ${{ steps.detect.outputs.dependabot }}
       python: ${{ steps.detect.outputs.python }}
+      codegen: ${{ steps.detect.outputs.codegen }}
       # Other runs write the caches PRs restore from.
       android-changed: >-
         ${{ github.event_name != 'pull_request'
@@ -201,6 +202,25 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
 
+  codegen:
+    name: Codegen
+    needs: plan
+    if: needs.plan.outputs.codegen == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: $/actions/setup-flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      - uses: $/actions/codegen
+        with:
+          working-directory: ${{ inputs.working-directory }}
+      # A brand new generated file is drift too, and plain `git diff` can't see one.
+      - run: git add --intent-to-add .
+      - run: git diff --exit-code
+
   test:
     name: Tests
     needs: plan
@@ -342,6 +362,7 @@ jobs:
       - analyze
       - dependencies
       - dartdoc
+      - codegen
       - test
       - example-test
       - example-android
@@ -363,6 +384,7 @@ jobs:
             analyze=${{ needs.analyze.result }}
             dependencies=${{ needs.dependencies.result }}
             dartdoc=${{ needs.dartdoc.result }}
+            codegen=${{ needs.codegen.result }}
             test=${{ needs.test.result }}
             example-test=${{ needs.example-test.result }}
             example-android=${{ needs.example-android.result }}
