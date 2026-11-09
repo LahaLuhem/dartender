@@ -18,6 +18,7 @@ small files of its own, plus some settings on GitHub that the jobs count on, and
 | `analysis_options.yaml`, and `dartender_lints` in the dev dependencies | The analyzer's settings, shared, see [The analyzer](#the-analyzer) |
 | `.fvmrc` | Which Flutter the jobs install, like `{"flutter": "stable"}` |
 | `.github/lint-checks.json` | Which linters run, see [The linters](#the-linters) |
+| `.github/codegen.json` | The generators to run, where the repo has any |
 | `.github/dependabot.yml` | What Dependabot keeps up to date |
 | The `dartender` ruleset, the `sem-*` labels and the merge settings on GitHub | Required checks, and a changelog section for each PR |
 
@@ -301,6 +302,7 @@ passes.
 | `actions/commit-conventions/` | Fails on a blank PR description, a merge commit, or an overlong commit subject |
 | `actions/sem-label/` | Fails unless the PR has exactly one `sem-*` label, read fresh from the API |
 | `actions/dependabot/` | Fails when the repo's `dependabot.yml` leaves out something for Dependabot to watch |
+| `actions/codegen/` | Runs the generators from the repo's `.github/codegen.json`, each in the folder it names |
 | `actions/test/` | Tests every package in one very_good run, gated on their combined coverage |
 | `actions/dartdoc/` | Fails unless dart doc comes back clean for every package the repo publishes |
 | `actions/tag-package/` | Finds the folder of the package a tag publishes |

@@ -1,0 +1,14 @@
+name: Codegen
+description: Runs the repo's generators from .github/codegen.json, each in the folder it names.
+
+inputs:
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/codegen.sh"'

@@ -31,6 +31,9 @@ outputs:
   python:
     description: Whether there's a benchmark/python, true or false.
     value: ${{ steps.detect.outputs.python }}
+  codegen:
+    description: Whether there's a .github/codegen.json to run generators from, true or false.
+    value: ${{ steps.detect.outputs.codegen }}
 
 runs:
   using: composite

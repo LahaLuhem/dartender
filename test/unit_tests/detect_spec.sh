@@ -25,11 +25,62 @@ Describe 'detect.sh'
     summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
     export GITHUB_STEP_SUMMARY="${summary}"
     expected="$(printf '%s\n' '### What dartender found' '| What | Found |' '|---|---|' \
-      '| Package | none |' '| Example | none |' '| Python | none |' \
+      '| Package | none |' '| Example | none |' '| Python | none |' '| Codegen | none |' \
       '| Linters | ShellCheck, rumdl |' "| Lint image | \`linterpol:1\` |" '| Dependabot | none |')"
     When run script scripts/detect.sh "${r}"
     The output should be present
     The contents of file "${summary}" should equal "${expected}"
+  End
+
+  Describe "the repo's generators"
+    gen() { printf '%s' "$2" > "$1/.github/codegen.json"; }
+
+    It 'says there are none when the repo has no codegen.json'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      When run script scripts/detect.sh "${r}"
+      The output should include 'codegen=false'
+    End
+
+    It 'says there are some when it has one'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      gen "${r}" '{"steps":[{"name":"Pigeon","cmd":"dart run tool/pigeon.dart"}]}'
+      When run script scripts/detect.sh "${r}"
+      The output should include 'codegen=true'
+    End
+
+    It 'names the steps on the run summary page'
+      r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+      gen "${r}" '{"steps":[{"name":"Pigeon","cmd":"a"},{"name":"FlutterGen","cmd":"b"}]}'
+      summary="$(mktemp "${SHELLSPEC_TMPBASE}/summary.XXXXXX")"
+      export GITHUB_STEP_SUMMARY="${summary}"
+      When run script scripts/detect.sh "${r}"
+      The output should be present
+      The contents of file "${summary}" should include '| Codegen | Pigeon, FlutterGen |'
+    End
+
+    Describe 'a codegen.json it cannot run'
+      Parameters
+        'an empty file' ''
+        'broken JSON' '{'
+        'one without steps' '{}'
+        'an empty step list' '{"steps":[]}'
+        'a step without a name' '{"steps":[{"cmd":"a"}]}'
+        'a step without a command' '{"steps":[{"name":"a"}]}'
+        'a blank command' '{"steps":[{"name":"a","cmd":" "}]}'
+        'a blank folder' '{"steps":[{"name":"a","folder":" ","cmd":"a"}]}'
+        'a later step without a command' '{"steps":[{"name":"a","cmd":"a"},{"name":"b"}]}'
+      End
+
+      It "fails on $1"
+        r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
+        gen "${r}" "$2"
+        When run script scripts/detect.sh "${r}"
+        The status should be failure
+        The stderr should start with '::error::'
+        # It got past the earlier checks, so codegen.json is what stopped it.
+        The output should be present
+      End
+    End
   End
 
   Describe 'what Dependabot has to watch'
