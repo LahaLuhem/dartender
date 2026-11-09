@@ -1,0 +1,20 @@
+name: Codegen bump
+description: Moves each pinned generator to its newest, so a bump and its output land together.
+
+inputs:
+  generators:
+    description: The pinned generators to move, detect.sh's generators output.
+    required: true
+  working-directory:
+    description: Folder of the package.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    # Needs the dependencies resolved already, which setup-flutter does.
+    - shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GENERATORS: ${{ inputs.generators }}
+      run: '"$GITHUB_ACTION_PATH/../../scripts/ci/codegen-bump.sh"'
