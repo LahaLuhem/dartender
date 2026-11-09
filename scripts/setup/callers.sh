@@ -41,11 +41,11 @@ out="$(mason make callers --output-dir "${repo}" --on-conflict overwrite --set-e
   --coverage_excludes "${coverage_excludes}" --python_min_coverage "${python_min_coverage}" \
   --ignored_lints "${ignored_lints}" 2>&1)" || rc=$?
 case "${rc}" in
-  0) success "The callers and lint-checks.json in ${repo}/.github are already up to date" ;;
+  0) success "The callers, lint-checks.json and renovate.json in ${repo} are already up to date" ;;
   # What --set-exit-if-changed exits with when it changed a file.
-  70) success "Wrote the callers and lint-checks.json in ${repo}/.github" ;;
+  70) success "Wrote the callers, lint-checks.json and renovate.json in ${repo}" ;;
   *)
-    error "mason couldn't write the callers and lint-checks.json: ${out}"
+    error "mason couldn't write the callers, lint-checks.json and renovate.json: ${out}"
     exit "${rc}"
     ;;
 esac
