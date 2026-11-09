@@ -17,7 +17,7 @@ fi
 # No [skip ci] here, unlike the changelog's: the whole point is for the check to run again.
 git -c "user.name=${AUTHOR_NAME}" -c "user.email=${AUTHOR_EMAIL}" commit --quiet -m "${MARKER}"
 
-if [[ "${MODE}" == repair ]]; then
+if [[ "${LAND}" == push ]]; then
   # Dependabot gives up rebasing a branch once anyone else pushes to it, so this commit stays.
   git push origin "HEAD:refs/heads/${BRANCH}"
   echo "Pushed the regen onto ${BRANCH}."

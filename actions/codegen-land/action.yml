@@ -2,8 +2,8 @@ name: Codegen land
 description: Commits whatever the generators moved, onto the branch it came from or a bump PR.
 
 inputs:
-  mode:
-    description: Either repair, to push onto the branch, or bump, to open a PR.
+  land:
+    description: Either push, onto the branch itself, or pr, to open one.
     required: true
   branch:
     description: The branch to push onto, or the one a bump PR targets.
@@ -40,7 +40,7 @@ runs:
     - shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
-        MODE: ${{ inputs.mode }}
+        LAND: ${{ inputs.land }}
         BRANCH: ${{ inputs.branch }}
         BUMP_BRANCH: ${{ inputs.bump-branch }}
         REPO: ${{ inputs.repo }}

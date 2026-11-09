@@ -10,7 +10,7 @@ skip() {
 
 # Anything but a finished CI run is the weekly bump, which has no run to look at.
 if [[ "${EVENT}" != workflow_run ]]; then
-  printf '%s\n' "go=true" "mode=bump" "branch=${DEFAULT_BRANCH}"
+  printf '%s\n' "go=true" "bump=true" "land=pr" "branch=${DEFAULT_BRANCH}"
   exit 0
 fi
 
@@ -41,4 +41,7 @@ if [[ -z "${failed}" ]]; then
 fi
 
 branch="$(jq -r .head_branch <<< "${run}")"
-printf '%s\n' "go=true" "mode=repair" "branch=${branch}"
+# A push to the default branch would go round the rulesets, so that drift gets a PR instead.
+land=push
+if [[ "${branch}" == "${DEFAULT_BRANCH}" ]]; then land='pr'; fi
+printf '%s\n' "go=true" "bump=false" "land=${land}" "branch=${branch}"

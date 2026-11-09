@@ -35,8 +35,9 @@ Describe 'ci/codegen-plan.sh'
     When run script "${script}"
     The status should be success
     The line 1 of output should equal 'go=true'
-    The line 2 of output should equal 'mode=repair'
-    The line 3 of output should equal 'branch=dependabot/pub/pigeon'
+    The line 2 of output should equal 'bump=false'
+    The line 3 of output should equal 'land=push'
+    The line 4 of output should equal 'branch=dependabot/pub/pigeon'
   End
 
   It 'takes the weekly run as a bump off the default branch, without looking at any run'
@@ -44,15 +45,25 @@ Describe 'ci/codegen-plan.sh'
     When run script "${script}"
     The status should be success
     The line 1 of output should equal 'go=true'
-    The line 2 of output should equal 'mode=bump'
-    The line 3 of output should equal 'branch=main'
+    The line 2 of output should equal 'bump=true'
+    The line 3 of output should equal 'land=pr'
+    The line 4 of output should equal 'branch=main'
   End
 
   It 'treats a manual run as a bump too'
     export EVENT=workflow_dispatch RUN_ID=''
     When run script "${script}"
     The status should be success
-    The line 2 of output should equal 'mode=bump'
+    The line 2 of output should equal 'bump=true'
+  End
+
+  It 'opens a PR for drift on the default branch, rather than pushing round its rulesets'
+    export HEAD_BRANCH=main
+    When run script "${script}"
+    The status should be success
+    The line 2 of output should equal 'bump=false'
+    The line 3 of output should equal 'land=pr'
+    The line 4 of output should equal 'branch=main'
   End
 
   It 'stays out of a run that passed'
@@ -106,7 +117,7 @@ Describe 'ci/codegen-plan.sh'
       export JOBS="$2"
       When run script "${script}"
       The status should be success
-      The line 2 of output should equal 'mode=repair'
+      The line 3 of output should equal 'land=push'
     End
   End
 

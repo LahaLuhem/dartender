@@ -25,9 +25,12 @@ outputs:
   go:
     description: Whether there is anything to do, true or false.
     value: ${{ steps.plan.outputs.go }}
-  mode:
-    description: Either repair, for drift on a branch, or bump, for the weekly run.
-    value: ${{ steps.plan.outputs.mode }}
+  bump:
+    description: Whether to move the pinned generators first, true or false.
+    value: ${{ steps.plan.outputs.bump }}
+  land:
+    description: Either push, onto the branch itself, or pr, which opens one instead.
+    value: ${{ steps.plan.outputs.land }}
   branch:
     description: The branch to check out and work on.
     value: ${{ steps.plan.outputs.branch }}

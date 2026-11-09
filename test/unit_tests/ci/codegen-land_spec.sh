@@ -19,7 +19,7 @@ Describe 'ci/codegen-land.sh'
     git -C "${checkout}" -c user.name=spec -c user.email=spec@example.com commit -qm First
     git -C "${checkout}" push -q origin main
     cd "${checkout}" || return
-    export MODE=repair BRANCH=main BUMP_BRANCH=codegen/generator-bumps REPO=owner/repo \
+    export LAND=push BRANCH=main BUMP_BRANCH=codegen/generator-bumps REPO=owner/repo \
       MARKER='Codegen regen' AUTHOR_NAME='app[bot]' AUTHOR_EMAIL='app[bot]@example.com' \
       GH_TOKEN=app-token DRY_RUN=false OPEN=0
   }
@@ -101,7 +101,7 @@ Describe 'ci/codegen-land.sh'
   End
 
   Describe 'the weekly bump'
-    bumping() { export MODE=bump; drifted; }
+    bumping() { export LAND=pr; drifted; }
 
     It 'pushes to its own branch and opens a PR onto the default one'
       bumping
