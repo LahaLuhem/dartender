@@ -34,3 +34,11 @@ updates:
       interval: weekly
     commit-message:
       prefix: build
+
+  # Only mason, at whatever version runs the hook, but the check wants every pubspec watched.
+  - package-ecosystem: pub
+    directory: /bricks/callers/hooks
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
