@@ -20,6 +20,19 @@ updates:
     commit-message:
       prefix: test
 
+  # So the fixture's Android build keeps up with Flutter like a real repo's. detect.sh skips test/,
+  # so the config check won't notice if this folder moves.
+  - package-ecosystem: gradle
+    directory: /test/workflow_tests/flutter_package/example/android
+    schedule:
+      interval: weekly
+    groups:
+      gradle:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: test
+
   - package-ecosystem: docker
     directory: /scripts/setup
     schedule:
