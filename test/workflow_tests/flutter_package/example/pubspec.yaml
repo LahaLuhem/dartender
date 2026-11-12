@@ -10,6 +10,7 @@ dependencies:
     sdk: flutter
   flutter_package:
     path: ..
+  material_ui: ^1.11.0
 
 dev_dependencies:
   # By path, so each self-test run analyzes with the lints of its own commit, not main's.
