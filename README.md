@@ -202,6 +202,26 @@ something to release, under Unreleased or from Dependabot. In a workspace, a pac
 bound on another of the repo's packages is below the major the repo has of it can't be released
 until that bound goes up, since pub.dev keeps a published bound for good.
 
+## Raising the SDK floor
+
+[`dart migrate`](https://dart.dev/tools/dart-migrate) raises a package's lowest Dart, the lower
+bound of its `environment.sdk`, and makes any fixes the new language version needs. That floor is
+a promise to everyone who depends on the package, so it only moves when you decide. Run it from the
+repo root, after `flutter pub get`:
+
+| The repo | Run |
+|---|---|
+| One package with an example | `dart migrate --apply . example` |
+| One package without one | `dart migrate --apply` |
+| A workspace | `dart migrate --apply`, which raises the root's only. It refuses members, so theirs go by hand |
+
+It goes one minor up, or to `--target-sdk`, and no further than the Dart running it. Then:
+
+- **Read its summary.** A package that fails to migrate still exits 0.
+- **Run `flutter pub get` again** where a `pubspec.lock` is tracked, like the example's, since the
+  lock records the floor.
+- **Land it in a PR of its own**, so its title is the changelog line.
+
 ## Workspaces
 
 A repo can be a [pub workspace](https://dart.dev/tools/pub/workspaces) of several packages. The jobs
@@ -333,11 +353,13 @@ the commit being run, so a PR tests its own version of everything.
 
 The shared `analysis_options.yaml` has to turn every lint the newest stable Flutter's Dart has on or
 off, and name none it has deprecated or removed. The analyzer only warns about those in a package's
-own file, never in one it includes, so the repos would never hear of them. The self-test checks it
-on every PR and weekly, which is how a new Flutter's lints turn up here. Turning a lint on reaches
-every repo's next CI run, so one that flags anything there turns that repo red until it's fixed. To
-see what it flags first, turn it on under the include in a repo's own file. Every free Dart and
-Flutter rule DCM has needs deciding too, which the self-test checks against
+own file, never in one it includes, so the repos would never hear of them. Only stable and
+experimental lints go on: Dart calls a `testing` one temporary and not for general use, so it stays
+out, or off where Dart's list includes one anyway. The self-test checks it on every PR and weekly,
+which is how a new Flutter's lints turn up here. Turning a lint on reaches every repo's next CI run,
+so one that flags anything there turns that repo red until it's fixed. To see what it flags first,
+turn it on under the include in a repo's own file. Every free Dart and Flutter rule DCM has needs
+deciding too, which the self-test checks against
 [dcm.dev's list](https://dcm.dev/docs/rules/?plan=free).
 
 Style for the shell, the specs and the prose lives in [CODESTYLE.md](CODESTYLE.md).
