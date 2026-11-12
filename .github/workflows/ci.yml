@@ -169,6 +169,10 @@ jobs:
     needs: plan
     if: needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
+    env:
+      # A Flutter package needs flutter whatever it imports, and code on material_ui may import
+      # nothing from it. Added in this checkout only, like the ignored lints.
+      IGNORE_FLUTTER: .ignore = ((.ignore // []) + ["flutter"] | unique)
     steps:
       - uses: actions/checkout@v7
         with:
@@ -179,9 +183,20 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
       # Global, so a repo needs no dev dependency on it.
       - run: dart pub global activate dependency_validator
+      # yq can't edit a file that isn't there.
+      - working-directory: ${{ inputs.working-directory }}
+        run: touch dart_dependency_validator.yaml
+      - working-directory: ${{ inputs.working-directory }}
+        run: yq -i "${IGNORE_FLUTTER}" dart_dependency_validator.yaml
       - working-directory: ${{ inputs.working-directory }}
         run: dependency_validator
       # Also after the root fails, so both get checked.
+      - if: ${{ !cancelled() && needs.plan.outputs.example == 'true' }}
+        working-directory: ${{ inputs.working-directory }}/example
+        run: touch dart_dependency_validator.yaml
+      - if: ${{ !cancelled() && needs.plan.outputs.example == 'true' }}
+        working-directory: ${{ inputs.working-directory }}/example
+        run: yq -i "${IGNORE_FLUTTER}" dart_dependency_validator.yaml
       - if: ${{ !cancelled() && needs.plan.outputs.example == 'true' }}
         working-directory: ${{ inputs.working-directory }}/example
         run: dependency_validator
