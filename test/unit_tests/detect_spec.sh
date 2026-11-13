@@ -101,6 +101,12 @@ Describe 'detect.sh'
         'a Gradle build' 'example/android/settings.gradle.kts' 'gradle /example/android'
         'a Groovy Gradle build' 'android/settings.gradle' 'gradle /android'
         'a uv project' 'tools/python/uv.lock' 'uv /tools/python'
+        "an Xcode project's Swift pins" \
+          'example/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved' \
+          'swift /example/ios'
+        "an Xcode workspace's Swift pins" \
+          'example/ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved' \
+          'swift /example/ios'
         'a workflow' '.github/workflows/ci.yml' 'github-actions /'
         'a workflow in a .yaml file' '.github/workflows/ci.yaml' 'github-actions /'
       End
@@ -113,10 +119,11 @@ Describe 'detect.sh'
       End
     End
 
-    It 'leaves out Swift packages, since no repo has one Dependabot can update'
+    It "leaves out a plugin's own Swift package, which needs the FlutterFramework a build makes"
       r="$(repo '{"image":"img","checks":[{"name":"a","cmd":"a"}]}')"
       track "${r}" pubspec.yaml $'name: a\n'
       track "${r}" ios/a/Package.swift
+      track "${r}" ios/a/Package.resolved
       When run script scripts/detect.sh "${r}"
       The output should satisfy watches 'pub /'
     End

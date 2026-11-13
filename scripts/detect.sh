@@ -84,6 +84,13 @@ while IFS= read -r file; do
       ;;
     */settings.gradle | */settings.gradle.kts) ecosystem=gradle ;;
     */uv.lock) ecosystem=uv ;;
+    # Xcode's pins only: Dependabot can't resolve a plugin's Package.swift without Flutter's build.
+    */*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved)
+      ecosystem=swift dir="${dir%/*.xcodeproj/*}"
+      ;;
+    */*.xcworkspace/xcshareddata/swiftpm/Package.resolved)
+      ecosystem=swift dir="${dir%/*.xcworkspace/*}"
+      ;;
     # Only composite actions have `uses:` lines to bump.
     */action.yml | */action.yaml)
       using="$(yq .runs.using "${file}")"
