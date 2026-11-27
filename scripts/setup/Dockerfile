@@ -3,7 +3,7 @@ FROM mikefarah/yq:4.54.3 AS yq
 FROM ghcr.io/jqlang/jq:1.8.2 AS jq
 FROM ghcr.io/charmbracelet/gum:v2.0.2 AS gum
 FROM dart:3.15.0-118.1.beta AS dart
-FROM debian:13.7-slim
+FROM debian:13.8-slim
 
 # gh the way its docs install it on Debian, since Debian's own is years behind.
 RUN keyring=/etc/apt/keyrings/githubcli-archive-keyring.gpg arch="$(dpkg --print-architecture)" \
